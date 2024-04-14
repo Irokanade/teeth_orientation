@@ -121,18 +121,18 @@ def pilSave(image,path,fileLabel,prefix,imageName):
     check = imageName.split('.')
     if prefix != "" :
         prefix += "_"
-    if len(check[-1]) < 4 :    
+    if len(check[-1]) < 4 :
         image.save(f"{path}/{fileLabel}/{prefix}{imageName[:-3]}png")
-    else:  
+    else:
         image.save(f"{path}/{fileLabel}/{prefix}{imageName[:-4]}png")
 
 def pltSave(path,fileLabel,prefix,imageName):
     check = imageName.split('.')
     if prefix != "" :
         prefix += "_"
-    if len(check[-1]) < 4 :    
+    if len(check[-1]) < 4 :
         plt.savefig(f"{path}/{fileLabel}/{prefix}{imageName[:-3]}png")
-    else:  
+    else:
         plt.savefig(f"{path}/{fileLabel}/{prefix}{imageName[:-4]}png")
 
 def makeResultDirProcess(fileName):
@@ -183,7 +183,7 @@ def process_images(imgs, model, device):
                 model, device, image, imageName, fileName, bb_thre, mask_thre, imageWidth, imageHeight)
             polyLine = analyze_image(xList, yList, pltImage, imageName, fileName, imageWidth, imageHeight)
             imageGray = cv2.cvtColor(pltImage, cv2.COLOR_BGR2GRAY)
-            imageInfo = PhotoImage(imageName, polyLine[0], len(teethLocationSet), imageGray, teethLocationSet, 
+            imageInfo = PhotoImage(imageName, polyLine[0], len(teethLocationSet), imageGray, teethLocationSet,
                                    imageWidth, imageHeight, pltImage, imageTeethNodeSet, np.poly1d(polyLine), polyLine)
             imageInfoSet.append(imageInfo)
             check_3D_flag(imageFileInfo, pltImage, imageName, fileName, image, npimg, npblack_img, imageWidth, imageHeight)
@@ -192,6 +192,8 @@ def process_images(imgs, model, device):
 def load_and_preprocess_image(fileName, imageName, device):
     image = Image.open(f"./dataset/Sample/{fileName}/{imageName}")
     image = exif_transpose(image)
+    if image.height > image.width:
+        image = image.rotate(90, expand=True)
     idealSize = 1024
     image.thumbnail((idealSize, idealSize))
     pltImage = np.array(image)
@@ -215,7 +217,7 @@ def detect_teeth(model, device, image, imageName, fileName, bb_thre, mask_thre, 
     bbox_file_path = f"./result/{fileName}/boundingBox/box_{imageName[:-4]}.csv"
     with open(bbox_file_path, "w", newline="") as bboxFile:
         csvWriter = csv.writer(bboxFile)
-        
+
         for box, mask, score in zip(output["boxes"], output["masks"], output["scores"]):
             if score.item() > bb_thre:
                 box_coords = [round(b.item()) for b in box]
