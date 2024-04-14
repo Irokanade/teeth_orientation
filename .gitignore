@@ -1,8 +1,9 @@
 ckpts/
+dataset/
 Sample_2/
-.DS_Store
 result/
 orientation/
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
