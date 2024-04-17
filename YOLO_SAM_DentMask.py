@@ -1359,8 +1359,8 @@ if __name__ == "__main__":
  
 
     #########著色#########        
-            with open('teeth_rgb.json') as jf:
-                with open('error_rgb.json') as errorJson:
+            with open('./utils/teeth_rgb.json') as jf:
+                with open('./utils/ierror_rgb.json') as errorJson:
                     colorData = json.load(jf)
                     errorData = json.load(errorJson)
                     for imageInfo in imageFileInfo.photoImageSet:
