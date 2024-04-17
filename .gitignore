@@ -5,6 +5,8 @@ result/
 sample/
 orientation/
 .DS_Store
+rotated/
+result_YOLO/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
