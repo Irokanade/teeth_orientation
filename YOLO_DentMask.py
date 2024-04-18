@@ -1253,8 +1253,8 @@ if __name__ == "__main__":
  
 
     #########著色#########        
-            with open('teeth_rgb.json') as jf:
-                with open('error_rgb.json') as errorJson:
+            with open('./utils/teeth_rgb.json') as jf:
+                with open('./utils/error_rgb.json') as errorJson:
                     colorData = json.load(jf)
                     errorData = json.load(errorJson)
                     for imageInfo in imageFileInfo.photoImageSet:
@@ -1301,7 +1301,7 @@ if __name__ == "__main__":
                                 x = int((teethNode.box.x1+teethNode.box.x2)/2 - fontSize/2)
                                 y = int((teethNode.box.y1+teethNode.box.y2)/2 - fontSize/2)
                                 draw = ImageDraw.Draw(img)
-                                font = ImageFont.truetype("arial.ttf", fontSize)
+                                font = ImageFont.truetype("./utils/arial.ttf", fontSize)
                                 draw.text((x,y),str(teethNode.labelId),font = font)
                                 imgDraw = ImageDraw.Draw(img)
                                 #imgDraw.rectangle([(teethNode.box.x1, teethNode.box.y1), (teethNode.box.x2, teethNode.box.y2)],outline = "red", width=5)
