@@ -887,7 +887,7 @@ def SAM(image, bbox):
         show_mask(mask.cpu().numpy(), plt.gca(), random_color=True)
     for box in input_boxes:
         show_box(box.cpu().numpy(), plt.gca())
-    
+
     return masks
 ### SAM ###
 
@@ -955,12 +955,11 @@ if __name__ == "__main__":
                 image = Image.open(image_path)
                 image = exif_transpose(image)
 
-                print(image.height)
                 # Rotate the image if height is greater than width
                 if image.height > image.width:
                     image = image.rotate(90, expand=True)
-                print(image.height)
 
+                image = image.transpose(Image.FLIP_LEFT_RIGHT)
                 # idealSize = 1024
                 # image.thumbnail((idealSize,idealSize))
 
@@ -973,7 +972,6 @@ if __name__ == "__main__":
 
                 pltImage = cv2.resize(pltImage, result.masks.data.shape[1:][::-1], interpolation=cv2.INTER_AREA)
                 image = Image.fromarray(np.uint8(pltImage))
-                
                 pilSave(image,f"./result/{fileName}","sample","",imageName)
 
                 imageWidth = len(pltImage[0])
@@ -985,7 +983,6 @@ if __name__ == "__main__":
 
                 masks = result.masks.data.cpu().numpy()
                 boxes = result.boxes.cpu().numpy()
-                
 
                 bbox = []
 
@@ -1123,24 +1120,24 @@ if __name__ == "__main__":
             else:
                 csvWriter.writerow(["2D"])
 
-            for i in range( len(imageInfoSet) ):
+            for imageInfo in imageInfoSet:
                 info = imageInfoSet[i]
                 if info.teethRank == 1 and info.gradientRank >= 3 and info.useFlag == False:
-                    csvWriter.writerow([imageInfoSet[i].imageName,"Face"])
-                    imageInfoSet[i].view = 'Face'
-                    imageInfoSet[i].useFlag = True
+                    csvWriter.writerow([imageInfo.imageName,"Face"])
+                    imageInfo.view = 'Face'
+                    imageInfo.useFlag = True
                     break
-            
-            for i in range( len(imageInfoSet) ):
-                info = imageInfoSet[i]
+
+            for imageInfo in imageInfoSet:
+                info = imageInfo
                 if info.teethRank != 1 and info.gradientRank <= 2 and info.useFlag == False:
                     if info.gradient >= 0:
-                        imageInfoSet[i].view = 'Up'
+                        imageInfo.view = 'Up'
                         csvWriter.writerow([imageInfoSet[i].imageName,"Up"])
                     else :
-                        imageInfoSet[i].view = 'Below'
+                        imageInfo.view = 'Below'
                         csvWriter.writerow([imageInfoSet[i].imageName,"Below"])
-                    imageInfoSet[i].useFlag = True
+                    imageInfo.useFlag = True
 
             leftRightCnt = 0
             for i in range( len(imageInfoSet) ):
@@ -1381,7 +1378,7 @@ if __name__ == "__main__":
                             #print("label",teethNode.labelId)
                             if str(teethNode.labelId) not in colorData[0]: #新增找不到label
                                 if isLabel:
-                                    color = errorData[0][chr(errorIndex)].copy()  
+                                    color = errorData[0][chr(errorIndex)].copy()
                                     color.reverse()  # rgb,bgr
                                     teethNode.labelId = chr(errorIndex)
                                     errorIndex += 1
