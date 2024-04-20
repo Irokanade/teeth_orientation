@@ -7,6 +7,10 @@ orientation/
 .DS_Store
 rotated/
 result_YOLO/
+result_old/
+result_YOLO_big_after/
+result_YOLO_big_before/
+rotatedAndMirrored/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
