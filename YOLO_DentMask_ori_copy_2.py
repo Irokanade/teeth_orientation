@@ -334,19 +334,19 @@ def extract_mask_brightness(image, mask):
     return brightness
 
 
-def check5Missing(teethNodeSet,sixBoxes):
-    iouThreshold = 0.8
-    for i in range(len(teethNodeSet)):
-        if teethNodeSet[i].labelId % 10 == 5: #check 5 missing
-            for sixBox in sixBoxes:
-                if countIou(teethNodeSet[i].box,sixBox) > iouThreshold:
-                    dimension = teethNodeSet[i].labelId//10
-                    for k in range(len(teethNodeSet)):
-                        if teethNodeSet[k].labelId // 10 == dimension and teethNodeSet[k].labelId%10 >= 5:
-                            teethNodeSet[k].labelId += 1
-                    print('5Missing!!!',file = specialLogFile)
-                    break
-    return teethNodeSet
+# def check5Missing(teethNodeSet,sixBoxes):
+#     iouThreshold = 0.8
+#     for i in range(len(teethNodeSet)):
+#         if teethNodeSet[i].labelId % 10 == 5: #check 5 missing
+#             for sixBox in sixBoxes:
+#                 if countIou(teethNodeSet[i].box,sixBox) > iouThreshold:
+#                     dimension = teethNodeSet[i].labelId//10
+#                     for k in range(len(teethNodeSet)):
+#                         if teethNodeSet[k].labelId // 10 == dimension and teethNodeSet[k].labelId%10 >= 5:
+#                             teethNodeSet[k].labelId += 1
+#                     print('5Missing!!!',file = specialLogFile)
+#                     break
+#     return teethNodeSet
 
 
 def doubleCheckPosition(imageInfo,leftTeethNodeSet,rightTeethNodeSet):
@@ -605,100 +605,100 @@ def teethNodeCombine(teethNodeSet,i1,i2):
 
     return teethNodeSet
 
-def toothErrorDetectionCombine(teethNodeSet,XOverlapRatio):
-    lock = True
-    while lock:
-        lock = False
-        n = len(teethNodeSet)
-        for i in range(n):
-            for k in range(i+1,n):
-                if XIou(teethNodeSet[i].box,teethNodeSet[k].box) >= XOverlapRatio:
-                    # print(XIou(teethNodeSet[i].box,teethNodeSet[k].box))
-                    # cv2.imshow('mask ',teethNodeSet[i].mask)
-                    # cv2.waitKey()
-                    # cv2.imshow('mask2 ',teethNodeSet[k].mask)
-                    # cv2.waitKey()
-                    print('Error Dection Combine Teeth!!', file=specialLogFile)
-                    #print('ori len = ',len(teethNodeSet))
-                    teethNodeSet = teethNodeCombine(teethNodeSet,i,k)
-                    #print('after len = ',len(teethNodeSet))
-                    lock = True
-                    break
-            if lock :
-                break
-    return teethNodeSet
+# def toothErrorDetectionCombine(teethNodeSet,XOverlapRatio):
+#     lock = True
+#     while lock:
+#         lock = False
+#         n = len(teethNodeSet)
+#         for i in range(n):
+#             for k in range(i+1,n):
+#                 if XIou(teethNodeSet[i].box,teethNodeSet[k].box) >= XOverlapRatio:
+#                     # print(XIou(teethNodeSet[i].box,teethNodeSet[k].box))
+#                     # cv2.imshow('mask ',teethNodeSet[i].mask)
+#                     # cv2.waitKey()
+#                     # cv2.imshow('mask2 ',teethNodeSet[k].mask)
+#                     # cv2.waitKey()
+#                     print('Error Dection Combine Teeth!!', file=specialLogFile)
+#                     #print('ori len = ',len(teethNodeSet))
+#                     teethNodeSet = teethNodeCombine(teethNodeSet,i,k)
+#                     #print('after len = ',len(teethNodeSet))
+#                     lock = True
+#                     break
+#             if lock :
+#                 break
+#     return teethNodeSet
 
 
-def leftRightLabel(imageInfo):
-    teethNodeSet = imageInfo.teethNodeSet
-    teethNodeSet = sorted(teethNodeSet ,key = lambda x : ((x.box.y2+x.box.y1)/2.0),reverse = False)
-    minDev = 1e9
-    upTeethNodeSet = []
-    belowTeethNodeSet = []
-    XOverlapRatio = 0.3 # 同排牙齒的X重疊程度，必須小於XoverlapRatio
-    YOverlapRatio = 0.2 # 同排牙齒的Y重疊程度，必須大於YoverlapRatio
-    for upNum in range(1,min(8+1,len(teethNodeSet))):
-        upTeethNodeSetTmp = teethNodeSet[:upNum]
-        belowTeethNodeSetTmp = teethNodeSet[upNum:]
-        upDev = np.std(  list(map( lambda teethNode : ( (teethNode.box.y1+teethNode.box.y2)/2.0 ),upTeethNodeSetTmp)) )
-        belowDev = np.std(  list(map( lambda teethNode : ( (teethNode.box.y1+teethNode.box.y2)/2.0 ),belowTeethNodeSetTmp)) )
+# def leftRightLabel(imageInfo):
+#     teethNodeSet = imageInfo.teethNodeSet
+#     teethNodeSet = sorted(teethNodeSet ,key = lambda x : ((x.box.y2+x.box.y1)/2.0),reverse = False)
+#     minDev = 1e9
+#     upTeethNodeSet = []
+#     belowTeethNodeSet = []
+#     XOverlapRatio = 0.3 # 同排牙齒的X重疊程度，必須小於XoverlapRatio
+#     YOverlapRatio = 0.2 # 同排牙齒的Y重疊程度，必須大於YoverlapRatio
+#     for upNum in range(1,min(8+1,len(teethNodeSet))):
+#         upTeethNodeSetTmp = teethNodeSet[:upNum]
+#         belowTeethNodeSetTmp = teethNodeSet[upNum:]
+#         upDev = np.std(  list(map( lambda teethNode : ( (teethNode.box.y1+teethNode.box.y2)/2.0 ),upTeethNodeSetTmp)) )
+#         belowDev = np.std(  list(map( lambda teethNode : ( (teethNode.box.y1+teethNode.box.y2)/2.0 ),belowTeethNodeSetTmp)) )
 
-        if upDev + belowDev < minDev and checkXYOverlap(upTeethNodeSetTmp,XOverlapRatio,YOverlapRatio) and checkXYOverlap(belowTeethNodeSetTmp,XOverlapRatio,YOverlapRatio):
-            #print('use XY')
-            minDev = upDev + belowDev
-            upTeethNodeSet = upTeethNodeSetTmp
-            belowTeethNodeSet = belowTeethNodeSetTmp
+#         if upDev + belowDev < minDev and checkXYOverlap(upTeethNodeSetTmp,XOverlapRatio,YOverlapRatio) and checkXYOverlap(belowTeethNodeSetTmp,XOverlapRatio,YOverlapRatio):
+#             #print('use XY')
+#             minDev = upDev + belowDev
+#             upTeethNodeSet = upTeethNodeSetTmp
+#             belowTeethNodeSet = belowTeethNodeSetTmp
              
-    if len(upTeethNodeSet)==0 and len(belowTeethNodeSet)==0: #改用迴歸直線分上下界線
-        #print('use regreesion')
-        for teethNode in teethNodeSet:
-            if (teethNode.box.y1+teethNode.box.y2)/2 < imageInfo.regression((teethNode.box.x1+teethNode.box.x2)/2):
-                upTeethNodeSet.append(teethNode)
-            else:
-                belowTeethNodeSet.append(teethNode)
+#     if len(upTeethNodeSet)==0 and len(belowTeethNodeSet)==0: #改用迴歸直線分上下界線
+#         #print('use regreesion')
+#         for teethNode in teethNodeSet:
+#             if (teethNode.box.y1+teethNode.box.y2)/2 < imageInfo.regression((teethNode.box.x1+teethNode.box.x2)/2):
+#                 upTeethNodeSet.append(teethNode)
+#             else:
+#                 belowTeethNodeSet.append(teethNode)
 
 
-    #牙齒跟牙根偵測錯誤(分離)，形成疊羅漢，同排必定X重疊程度<XoverlapRatio
-    upTeethNodeSet = toothErrorDetectionCombine(upTeethNodeSet,XOverlapRatio)
-    belowTeethNodeSet = toothErrorDetectionCombine(belowTeethNodeSet,XOverlapRatio)
-    #####
+#     #牙齒跟牙根偵測錯誤(分離)，形成疊羅漢，同排必定X重疊程度<XoverlapRatio
+#     upTeethNodeSet = toothErrorDetectionCombine(upTeethNodeSet,XOverlapRatio)
+#     belowTeethNodeSet = toothErrorDetectionCombine(belowTeethNodeSet,XOverlapRatio)
+#     #####
         
-    upDimension = -1
-    belowDimension = -1
-    if imageInfo.view == 'Left':
-        upDimension = 2
-        belowDimension = 3
-        upTeethNodeSet  = sorted(upTeethNodeSet ,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = True)
-        belowTeethNodeSet = sorted(belowTeethNodeSet,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = True)
-    elif imageInfo.view == 'Right':
-        upDimension = 1
-        belowDimension = 4
-        upTeethNodeSet  = sorted(upTeethNodeSet ,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = False)
-        belowTeethNodeSet = sorted(belowTeethNodeSet,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = False)
+#     upDimension = -1
+#     belowDimension = -1
+#     if imageInfo.view == 'Left':
+#         upDimension = 2
+#         belowDimension = 3
+#         upTeethNodeSet  = sorted(upTeethNodeSet ,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = True)
+#         belowTeethNodeSet = sorted(belowTeethNodeSet,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = True)
+#     elif imageInfo.view == 'Right':
+#         upDimension = 1
+#         belowDimension = 4
+#         upTeethNodeSet  = sorted(upTeethNodeSet ,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = False)
+#         belowTeethNodeSet = sorted(belowTeethNodeSet,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = False)
 
-    upIndex = 0
-    for labelId in range(upDimension*10 + 8, upDimension*10+1 -1, -1): #up 象限1/2
-        if upIndex >= len(upTeethNodeSet):
-            break
-        if(imageFileInfo.missingLabelId.count(labelId) == 1):
-            #print(str(labelId)+"miss!")
-            nothing = 'nothing'
-        else:
-            upTeethNodeSet[ upIndex ].labelId = labelId
-            upIndex += 1
+#     upIndex = 0
+#     for labelId in range(upDimension*10 + 8, upDimension*10+1 -1, -1): #up 象限1/2
+#         if upIndex >= len(upTeethNodeSet):
+#             break
+#         if(imageFileInfo.missingLabelId.count(labelId) == 1):
+#             #print(str(labelId)+"miss!")
+#             nothing = 'nothing'
+#         else:
+#             upTeethNodeSet[ upIndex ].labelId = labelId
+#             upIndex += 1
 
-    belowIndex = 0
-    for labelId in range(belowDimension*10 + 8, belowDimension*10+1 -1, -1): #below 象限4/3
-        if belowIndex >= len(belowTeethNodeSet):
-            break
-        if(imageFileInfo.missingLabelId.count(labelId) == 1):
-            #print(str(labelId)+"miss!")
-            nothing = 'nothing'
-        else:
-            belowTeethNodeSet[ belowIndex ].labelId = labelId
-            belowIndex += 1
+#     belowIndex = 0
+#     for labelId in range(belowDimension*10 + 8, belowDimension*10+1 -1, -1): #below 象限4/3
+#         if belowIndex >= len(belowTeethNodeSet):
+#             break
+#         if(imageFileInfo.missingLabelId.count(labelId) == 1):
+#             #print(str(labelId)+"miss!")
+#             nothing = 'nothing'
+#         else:
+#             belowTeethNodeSet[ belowIndex ].labelId = labelId
+#             belowIndex += 1
     
-    return upTeethNodeSet,belowTeethNodeSet
+#     return upTeethNodeSet,belowTeethNodeSet
 
 def pilSave(image,path,fileLabel,prefix,imageName):
     check = imageName.split('.')
@@ -734,79 +734,79 @@ def makeResultDirProcess(fileName):
         tmp = os.path.join(redir, fileName, name)
         os.makedirs(tmp,exist_ok=True)
 
-def getBoundingBoxes(model,threshold,imageInfo):
+# def getBoundingBoxes(model,threshold,imageInfo):
     
-    torchImage = torch.as_tensor(np.array(imageInfo.image)[...,:3]/255, dtype=torch.float32).permute(2,0,1).unsqueeze(0)
-    torchImage = torchImage.to(device)
-    output = model(torchImage)[0]
+#     torchImage = torch.as_tensor(np.array(imageInfo.image)[...,:3]/255, dtype=torch.float32).permute(2,0,1).unsqueeze(0)
+#     torchImage = torchImage.to(device)
+#     output = model(torchImage)[0]
 
-    scores = output["scores"]
-    boxes = output["boxes"]
-    masks = output["masks"]
-    classes = output["labels"]
-    zippedData = zip(boxes,masks, scores,classes)
-    zippedData = sorted(zippedData,key=lambda x:x[2],reverse=True)
-    # if len(zippedData) > 2:
-    #     zippedData = zippedData[:2]
-    retBoxes = []
+#     scores = output["scores"]
+#     boxes = output["boxes"]
+#     masks = output["masks"]
+#     classes = output["labels"]
+#     zippedData = zip(boxes,masks, scores,classes)
+#     zippedData = sorted(zippedData,key=lambda x:x[2],reverse=True)
+#     # if len(zippedData) > 2:
+#     #     zippedData = zippedData[:2]
+#     retBoxes = []
 
-    leftBoxes = []
-    rightBoxes = []
-    leftScores = []
-    rightScores = []
-    for box,mask, score,label in zippedData:
-        #print(score.item())
-        if score.item() > threshold:
-            box = [b.item() for b in box]
-            x1, y1, x2 ,y2 = box
-            x1 = int(x1)
-            y1 = int(y1)
-            x2 = int(x2)
-            y2 = int(y2)
-            # print(type(score.item()))
-            # print(score.item())
-            if (x1+x2)/2 < (imageInfo.width/2): #left
-                leftBoxes.append(TeethLocation(x1,y1,x2,y2))
-                leftScores.append(score.item())
-            else:
-                #print(x1,y1,x2,y2)
-                #print('score = ',score.item())
-                rightBoxes.append(TeethLocation(x1,y1,x2,y2))
-                rightScores.append(score.item())
-    #找左右,y軸最上or最下的牙齒
-    # if imageInfo.view == 'Up':
-    #     if len(leftBoxes) > 0:
-    #         retBoxes.append(max(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
-    #     if len(rightBoxes) > 0:
-    #         retBoxes.append(max(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
-    # elif imageInfo.view == 'Below':
-    #     if len(leftBoxes) > 0:
-    #         retBoxes.append(min(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
-    #     if len(rightBoxes) > 0:
-    #         retBoxes.append(min(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
-    # else:
-    #     print('590 line error!!!!')
+#     leftBoxes = []
+#     rightBoxes = []
+#     leftScores = []
+#     rightScores = []
+#     for box,mask, score,label in zippedData:
+#         #print(score.item())
+#         if score.item() > threshold:
+#             box = [b.item() for b in box]
+#             x1, y1, x2 ,y2 = box
+#             x1 = int(x1)
+#             y1 = int(y1)
+#             x2 = int(x2)
+#             y2 = int(y2)
+#             # print(type(score.item()))
+#             # print(score.item())
+#             if (x1+x2)/2 < (imageInfo.width/2): #left
+#                 leftBoxes.append(TeethLocation(x1,y1,x2,y2))
+#                 leftScores.append(score.item())
+#             else:
+#                 #print(x1,y1,x2,y2)
+#                 #print('score = ',score.item())
+#                 rightBoxes.append(TeethLocation(x1,y1,x2,y2))
+#                 rightScores.append(score.item())
+#     #找左右,y軸最上or最下的牙齒
+#     # if imageInfo.view == 'Up':
+#     #     if len(leftBoxes) > 0:
+#     #         retBoxes.append(max(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
+#     #     if len(rightBoxes) > 0:
+#     #         retBoxes.append(max(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
+#     # elif imageInfo.view == 'Below':
+#     #     if len(leftBoxes) > 0:
+#     #         retBoxes.append(min(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
+#     #     if len(rightBoxes) > 0:
+#     #         retBoxes.append(min(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
+#     # else:
+#     #     print('590 line error!!!!')
 
 
-    #找左右分數最大，各一顆
-    if len(leftBoxes) > 0:
-        retBoxes.append(  (max(zip(leftBoxes,leftScores), key=lambda box: box[1] ))[0]  )
-    if len(rightBoxes) > 0:
-        retBoxes.append(  (max(zip(rightBoxes,rightScores), key=lambda box: box[1]))[0] )
+#     #找左右分數最大，各一顆
+#     if len(leftBoxes) > 0:
+#         retBoxes.append(  (max(zip(leftBoxes,leftScores), key=lambda box: box[1] ))[0]  )
+#     if len(rightBoxes) > 0:
+#         retBoxes.append(  (max(zip(rightBoxes,rightScores), key=lambda box: box[1]))[0] )
     
-    drawImage = Image.fromarray(imageInfo.image.copy())
-    draw = ImageDraw.Draw(drawImage)
-    for box in retBoxes:
-        x1 = box.x1
-        x2 = box.x2
-        y1 = box.y1
-        y2 = box.y2
-        detLineScale = 0.005 #det line width scale
-        draw.line([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)], fill=color, width=int(imageInfo.width*detLineScale))
+#     drawImage = Image.fromarray(imageInfo.image.copy())
+#     draw = ImageDraw.Draw(drawImage)
+#     for box in retBoxes:
+#         x1 = box.x1
+#         x2 = box.x2
+#         y1 = box.y1
+#         y2 = box.y2
+#         detLineScale = 0.005 #det line width scale
+#         draw.line([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)], fill=color, width=int(imageInfo.width*detLineScale))
 
-    pilSave(drawImage,f"./result/{fileName}","det","det_upLowerSix",imageInfo.imageName)
+#     pilSave(drawImage,f"./result/{fileName}","det","det_upLowerSix",imageInfo.imageName)
 
-    return retBoxes
+#     return retBoxes
 
 def checkClassication(leftCnt, rightCnt , imageInfoSet, specialLogFile):
     if leftCnt > 1 or rightCnt > 1:
