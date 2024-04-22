@@ -46,7 +46,7 @@ for folder_name in os.listdir(result_folder_path):
     print(folder_name)
 
     if os.path.isdir(folder_path):
-        sample_folder_path = os.path.join(folder_path, 'raw_images')
+        sample_folder_path = os.path.join(folder_path, 'sample')
         mask_folder_path = os.path.join(folder_path, 'mask')
         csv_file_path = os.path.join(folder_path, 'imageClassification.csv')
         node_folder_path = os.path.join(folder_path, 'node')
