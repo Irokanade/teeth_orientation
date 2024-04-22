@@ -163,14 +163,16 @@ def to_serializable(val):
     return val
 
 def sortGradient(infoSet):
-    infoSet = sorted(infoSet,key = lambda x : x.absGradient,reverse = True)
-    for info in infoSet:
-        info.gradientRank = i + 1
+    infoSet = sorted(infoSet,key = lambda x : x.absGradient, reverse = True)
+    for index, info in enumerate(infoSet):
+        info.gradientRank = index + 1
+
 
 def sortTeeth(infoSet):
-    infoSet = sorted(infoSet,key = lambda x : x.teethNum,reverse = True)
-    for info in infoSet:
-        info.teethRank = i + 1
+    infoSet = sorted(infoSet, key = lambda x : x.teethNum, reverse = True)
+    for index, info in enumerate(infoSet):
+        info.teethRank = index + 1
+
 
 def checkFlag3D(oriPltImage,resizeScale,proportion):
     pltImage = cv2.resize(oriPltImage, dsize=(int(imageWidth*resizeScale),int(imageHeight*resizeScale)), interpolation=cv2.INTER_CUBIC)
@@ -930,7 +932,7 @@ if __name__ == "__main__":
 
             imageFileInfo = ImageFile(fileName)
 
-            imageInfoSet = []
+            imageInfoSet: list[PhotoImage] = []
             labelLoc = {}
 
             for imageName in imgSet:
@@ -1109,7 +1111,12 @@ if __name__ == "__main__":
                     csvWriter.writerow([info.imageName,"Face"])
                     info.view = 'Face'
                     info.useFlag = True
+                    # frontal image flip back to original image
                     info.image = np.flip(info.image, axis=1)
+                    # regression gradient ax^2 + bx + c = 0
+                    a = info.polyLine[0]
+                    if a > 0:
+                        info.image = np.flipud(info.image)
                     break
 
             for info in imageInfoSet:
