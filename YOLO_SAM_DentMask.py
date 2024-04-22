@@ -164,13 +164,13 @@ def to_serializable(val):
 
 def sortGradient(infoSet):
     infoSet = sorted(infoSet,key = lambda x : x.absGradient,reverse = True)
-    for i in range( len(infoSet) ):
-        infoSet[ i ].gradientRank = i+1
+    for info in infoSet:
+        info.gradientRank = i + 1
 
 def sortTeeth(infoSet):
     infoSet = sorted(infoSet,key = lambda x : x.teethNum,reverse = True)
-    for i in range( len(infoSet) ):
-        infoSet[ i ].teethRank = i+1
+    for info in infoSet:
+        info.teethRank = i + 1
 
 def checkFlag3D(oriPltImage,resizeScale,proportion):
     pltImage = cv2.resize(oriPltImage, dsize=(int(imageWidth*resizeScale),int(imageHeight*resizeScale)), interpolation=cv2.INTER_CUBIC)
@@ -924,8 +924,6 @@ if __name__ == "__main__":
 
     with open('specialLog.log','w') as specialLogFile :
         for fileName,imgSet in imgs.items():
-            if not("41" <= fileName):
-                continue
             print('\n\nfileName : ',fileName, file = specialLogFile)
             print( '\nProcess : ',fileName )
             makeResultDirProcess(fileName)
@@ -947,6 +945,7 @@ if __name__ == "__main__":
                 if image.height > image.width:
                     image = image.rotate(90, expand=True)
 
+                # Mirror flip all image
                 image = image.transpose(Image.FLIP_LEFT_RIGHT)
                 # idealSize = 1024
                 # image.thumbnail((idealSize,idealSize))
@@ -1105,24 +1104,23 @@ if __name__ == "__main__":
             else:
                 csvWriter.writerow(["2D"])
 
-            for imageInfo in imageInfoSet:
-                info = imageInfoSet[i]
+            for info in imageInfoSet:
                 if info.teethRank == 1 and info.gradientRank >= 3 and info.useFlag == False:
-                    csvWriter.writerow([imageInfo.imageName,"Face"])
-                    imageInfo.view = 'Face'
-                    imageInfo.useFlag = True
+                    csvWriter.writerow([info.imageName,"Face"])
+                    info.view = 'Face'
+                    info.useFlag = True
+                    info.image = np.flip(info.image, axis=1)
                     break
 
-            for imageInfo in imageInfoSet:
-                info = imageInfo
+            for info in imageInfoSet:
                 if info.teethRank != 1 and info.gradientRank <= 2 and info.useFlag == False:
                     if info.gradient >= 0:
-                        imageInfo.view = 'Up'
-                        csvWriter.writerow([imageInfoSet[i].imageName,"Up"])
+                        info.view = 'Up'
+                        csvWriter.writerow([info.imageName,"Up"])
                     else :
-                        imageInfo.view = 'Below'
-                        csvWriter.writerow([imageInfoSet[i].imageName,"Below"])
-                    imageInfo.useFlag = True
+                        info.view = 'Below'
+                        csvWriter.writerow([info.imageName,"Below"])
+                    info.useFlag = True
 
             leftRightCnt = 0
             for i in range( len(imageInfoSet) ):
@@ -1341,7 +1339,7 @@ if __name__ == "__main__":
 
     #########著色#########
             with open('./utils/teeth_rgb.json') as jf:
-                with open('./utils/ierror_rgb.json') as errorJson:
+                with open('./utils/error_rgb.json') as errorJson:
                     colorData = json.load(jf)
                     errorData = json.load(errorJson)
                     for imageInfo in imageFileInfo.photoImageSet:
