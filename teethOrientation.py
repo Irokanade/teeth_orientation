@@ -7,6 +7,12 @@ from matplotlib.pyplot import *
 from matplotlib import pyplot as plt
 import math
 
+def makeOutputDir(output_folder_path,folder_name,subfolder_name,image_filename):
+    output_subfolder_path = os.path.join(output_folder_path, folder_name, subfolder_name)
+    os.makedirs(output_subfolder_path, exist_ok=True)
+    output_image_path = os.path.join(output_subfolder_path, image_filename)
+    return output_image_path
+
 def rotate(x,y,angle): #rotate x,y around 0,0 by angle (rad)
     xr=math.cos(angle)*x-math.sin(angle)*y
     yr=math.sin(angle)*x+math.cos(angle)*y
@@ -85,12 +91,7 @@ for folder_name in os.listdir(result_folder_path):
                         # if not face then it is mirrored
                         image = image.transpose(Image.FLIP_LEFT_RIGHT)
 
-                    # Create the output folder structure mirroring the input structure
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '0_sample')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    # Save the processed image to the 'orientation' folder
-                    output_image_path = os.path.join(output_subfolder_path, image_filename)
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '0_sample', image_filename)
                     image.save(output_image_path)
 
 
@@ -116,6 +117,7 @@ for folder_name in os.listdir(result_folder_path):
                             nArray.append(float(item))
                         nodeArray.append(nArray)
 
+                    '''
                     # Find nodes far away from others
                     newnodeArray = []
                     for i in range(len(nodeArray[0])):
@@ -152,7 +154,7 @@ for folder_name in os.listdir(result_folder_path):
                         nodeArray[1] = np.delete(nodeArray[1],outputArray[0])
                         for i in outputArray[0]:
                             del boxArray[i]
-
+                    '''
 
                     # Rotate nodes, bounding boxes, and image 90 degrees
                     if Cutimage.height > Cutimage.width:
@@ -182,6 +184,43 @@ for folder_name in os.listdir(result_folder_path):
                     # Create polynomial line
                     polyLine = np.polyfit(nodeArray[0],nodeArray[1],2)
                     p = np.poly1d( polyLine )
+
+                    # Find nodes far away from others
+                    newnodeArray = []
+                    for i in range(len(nodeArray[0])):
+                        newnodeArray.append([nodeArray[0][i],nodeArray[1][i]])
+
+                    column_name = ['x','y']
+                    node_df = pd.DataFrame(newnodeArray)
+                    node_df.columns = column_name
+
+                    node_df['x'] = np.log1p(node_df['x'])
+                    node_df['y'] = np.log1p(node_df['y'])
+
+                    Q1 = np.percentile(node_df['y']-p(node_df['x']), 25)
+                    Q3 = np.percentile(node_df['y']-p(node_df['x']), 75)
+                    IQR = Q3 - Q1
+                    n = 1.5
+
+                    upper = (node_df['y']-p(node_df['x'])) >= (Q3+n*IQR)
+                    outputArray = np.array(np.where(upper))
+                    outputArray[0] = sorted(outputArray[0], reverse=True)
+                    # Delete nodes and bounding boxes
+                    if len(outputArray[0]) > 0:
+                        nodeArray[0] = np.delete(nodeArray[0],outputArray[0])
+                        nodeArray[1] = np.delete(nodeArray[1],outputArray[0])
+                        for i in outputArray[0]:
+                            del boxArray[i]
+
+                    lower = (node_df['y']-p(node_df['x'])) <= (Q1-n*IQR)
+                    outputArray = np.array(np.where(lower))
+                    outputArray[0] = sorted(outputArray[0], reverse=True)
+                    # Delete nodes and bounding boxes
+                    if len(outputArray[0]) > 0:
+                        nodeArray[0] = np.delete(nodeArray[0],outputArray[0])
+                        nodeArray[1] = np.delete(nodeArray[1],outputArray[0])
+                        for i in outputArray[0]:
+                            del boxArray[i]
                     
                     # Find critical points
                     bounds = [0, Cutimage.width-1]
@@ -244,10 +283,7 @@ for folder_name in os.listdir(result_folder_path):
                     plt.scatter([p1,p2], [p(p1),p(p2)])
 
                     # Save img with nodes and line
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '2_line')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    output_image_path = os.path.join(output_subfolder_path, f"line_{image_filename}")
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '2_line', f"line_{image_filename}")
                     plt.savefig(output_image_path)
                     plt.clf()
 
@@ -258,10 +294,7 @@ for folder_name in os.listdir(result_folder_path):
                     Cutimage = Cutimage.rotate(angle,expand=1)
 
                     # Save rotated image
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '1_rotate')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    output_image_path = os.path.join(output_subfolder_path, f"rotate_{image_filename}")
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '1_rotate', f"rotate_{image_filename}")
                     Cutimage.save(output_image_path)
 
                      
@@ -310,10 +343,7 @@ for folder_name in os.listdir(result_folder_path):
                     plt.plot(x_base, p(x_base),color = 'red')
 
                     # Save img with nodes and line
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '2_line_after_rotate')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    output_image_path = os.path.join(output_subfolder_path, f"line_after_rotate_{image_filename}")
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '2_line_after_rotate', f"line_after_rotate_{image_filename}")
                     plt.savefig(output_image_path)
                     plt.clf()
 
@@ -327,12 +357,10 @@ for folder_name in os.listdir(result_folder_path):
                         draw.line([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)], fill=color, width=int(Cutimage.width*detLineScale))
 
                     # Save img with bounding boxes
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '2_det')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    output_image_path = os.path.join(output_subfolder_path, f"det_{image_filename}")
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '2_det', f"det_{image_filename}")
                     Cutimg.save(output_image_path)
 
+                    '''
                     # Find the area to crop
                     minX = -1
                     maxX = -1
@@ -457,18 +485,16 @@ for folder_name in os.listdir(result_folder_path):
                             minX -= ((maxY-minY)*1.5-(maxX-minX)) / 2
                             minX += ((maxX + ((maxY-minY)*1.5-(maxX-minX))/2) - Cutimage.width)
                             maxX = Cutimage.width
-                    ''''''
+                    
 
                     # Crop image
                     Cutimage = Cutimage.crop((minX,minY,maxX,maxY))
                     #print()
 
                     # Save cropped image
-                    output_subfolder_path = os.path.join(output_folder_path, folder_name, '3_crop')
-                    os.makedirs(output_subfolder_path, exist_ok=True)
-
-                    output_image_path = os.path.join(output_subfolder_path, f"crop_{image_filename}")
+                    output_image_path = makeOutputDir(output_folder_path, folder_name, '3_crop', f"crop_{image_filename}")
                     Cutimage.save(output_image_path)
+                    '''
 
 
 

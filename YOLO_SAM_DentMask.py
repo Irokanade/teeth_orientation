@@ -98,7 +98,7 @@ class TeethNode:
 
     def dump(self):
         return [self.mask, self.box, self.labelId]
-
+    
     @staticmethod
     def build_teethNode(attributes):
         return TeethNode(*attributes)
@@ -279,7 +279,7 @@ def doubleCheckPivot(missingLabelId,imageInfo):
 def labelOffset(teethNodeSet,offset):
     for teethNode in teethNodeSet:
         teethNode.labelId += offset
-
+        
 def boxMiddle(box):
     return (box.x1 + box.x2)/2 , (box.y1 + box.y2)/2
 
@@ -294,7 +294,7 @@ def missingLabel(view,leftTeethNodeSet,rightTeethNodeSet):
     elif view == 'Below':
         leftDimension = 3
         rightDimension = 4
-
+    
     for dimension in range(leftDimension, rightDimension+1):
         for checkLabel in range( dimension*10+1,dimension*10+1+8 ):
             check = False
@@ -317,7 +317,7 @@ def extract_box_brightness(image, box):
     y2 = min(int(box.y2), image.shape[0])
     #print('box = ',x1,y1,x2,y2)
     bounding_box_region = image[y1:y2, x1:x2, :]
-
+    
     #print(bounding_box_region.shape)
 
     brightness = np.mean(bounding_box_region)
@@ -359,7 +359,7 @@ def doubleCheckPosition(imageInfo,leftTeethNodeSet,rightTeethNodeSet):
     copyLeft = leftTeethNodeSet[:]
     copyRight = rightTeethNodeSet[:]
     if targetOffset == -1:
-        if imageInfo.view == 'Up':
+        if imageInfo.view == 'Up':   
             copyLeft[0].labelId = 20
         elif imageInfo.view == 'Below':
             copyLeft[0].labelId = 30
@@ -387,7 +387,7 @@ def slidingTeeth(regression,baseTeethLoc,slidingOverlapRatio,xStep,state):
     teethHeight = (baseTeethLoc.y2 - baseTeethLoc.y1)
     Xstart = int((baseTeethLoc.x2 + baseTeethLoc.x1)/2)
     while countIou( absoluteXYWHtoLoc(Xstart,regression(Xstart),teethWidth,teethHeight),baseTeethLoc ) > slidingOverlapRatio :
-        if state == 'Left':
+        if state == 'Left':  
             Xstart -= xStep
         else:
             Xstart += xStep
@@ -644,7 +644,7 @@ def leftRightLabel(imageInfo):
             minDev = upDev + belowDev
             upTeethNodeSet = upTeethNodeSetTmp
             belowTeethNodeSet = belowTeethNodeSetTmp
-
+             
     if len(upTeethNodeSet)==0 and len(belowTeethNodeSet)==0: #改用迴歸直線分上下界線
         #print('use regreesion')
         for teethNode in teethNodeSet:
@@ -658,7 +658,7 @@ def leftRightLabel(imageInfo):
     upTeethNodeSet = toothErrorDetectionCombine(upTeethNodeSet,XOverlapRatio)
     belowTeethNodeSet = toothErrorDetectionCombine(belowTeethNodeSet,XOverlapRatio)
     #####
-
+        
     upDimension = -1
     belowDimension = -1
     if imageInfo.view == 'Left':
@@ -693,7 +693,7 @@ def leftRightLabel(imageInfo):
         else:
             belowTeethNodeSet[ belowIndex ].labelId = labelId
             belowIndex += 1
-
+    
     return upTeethNodeSet,belowTeethNodeSet
 
 def pilSave(image,path,fileLabel,prefix,imageName):
@@ -813,7 +813,7 @@ def checkClassication(leftCnt, rightCnt , imageInfoSet):
             elif imageInfo.view == 'Right':
                 imageInfo.view = 'Left'
                 return
-
+            
 def constructDimensionDict(teethNodeSet):
     ret = {}
     for teethNode in teethNodeSet:
@@ -832,13 +832,13 @@ def show_mask(mask, ax, random_color=False):
     h, w = mask.shape[-2:]
     mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
     ax.imshow(mask_image)
-
+    
 def show_points(coords, labels, ax, marker_size=375):
     pos_points = coords[labels==1]
     neg_points = coords[labels==0]
     ax.scatter(pos_points[:, 0], pos_points[:, 1], color='green', marker='*', s=marker_size, edgecolor='white', linewidth=1.25)
     ax.scatter(neg_points[:, 0], neg_points[:, 1], color='red', marker='*', s=marker_size, edgecolor='white', linewidth=1.25)   
-
+    
 def show_box(box, ax):
     x0, y0 = box[0], box[1]
     w, h = box[2] - box[0], box[3] - box[1]
@@ -877,7 +877,7 @@ def SAM(image, bbox):
         show_mask(mask.cpu().numpy(), plt.gca(), random_color=True)
     for box in input_boxes:
         show_box(box.cpu().numpy(), plt.gca())
-
+    
     return masks
 ### SAM ###
 
@@ -885,7 +885,7 @@ if __name__ == "__main__":
     print("Cuda is available = ",torch.cuda.is_available())
     print("Cuda version = ",torch.version.cuda)
     print("pytorch version = ",torch.__version__)
-
+    
     #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:2048"
     isGPU = True
     isLabel = False
@@ -961,6 +961,7 @@ if __name__ == "__main__":
 
                 pltImage = cv2.resize(pltImage, result.masks.data.shape[1:][::-1], interpolation=cv2.INTER_AREA)
                 image = Image.fromarray(np.uint8(pltImage))
+                
                 pilSave(image,f"./result/{fileName}","sample","",imageName)
 
                 imageWidth = len(pltImage[0])
@@ -1000,7 +1001,7 @@ if __name__ == "__main__":
 
                 plt.axis('off')
                 #plt.show()
-
+                
                 #plt.savefig(f"./SAM_mask/{fileName}/{imageName[:-4]}.png")
                 ### SAM ###
 
@@ -1016,7 +1017,7 @@ if __name__ == "__main__":
                 teethLocationSet = []
                 imageTeethNodeSet = []
 
-
+                
                 npimg = np.array(image.copy(), dtype=np.uint8)
                 npblack_img = np.array(black_img, dtype=np.uint8)
                 for box,mask in zip(boxes,masks):
@@ -1027,7 +1028,7 @@ if __name__ == "__main__":
                     # print(mask.shape)
                     mask = mask.detach().squeeze().cpu().numpy()
                     mask = np.where(mask > confident_thre, 255, 0).astype(np.uint8)
-
+                    
                     points = cv2.findNonZero(mask)
                     x,y,w,h = cv2.boundingRect(points)
                     x1 = int(x)
@@ -1037,9 +1038,9 @@ if __name__ == "__main__":
                     #print(x1,y1, x2, y2)
                     # cv2.imshow('mask',mask)
                     # cv2.waitKey()
-
+                    
                     teethLocationSet.append( TeethLocation(x1,y1,x2,y2) )
-
+                    
                     xList.append( (x1+x2)/2 )
                     yList.append( (y1+y2)/2 )
 
@@ -1051,11 +1052,12 @@ if __name__ == "__main__":
                     npimg[np.where(mask>0)] = color
                     npblack_img[np.where(mask>0)] = color
 
+                    
                     color = tuple(np.random.choice(range(256), size=3))
                     detLineScale = 0.005 #det line width scale
                     draw.line([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)], fill=color, width=int(imageWidth*detLineScale))
                     # draw.text((x1,y1), f"{score.item():.4f}", font=fnt) # draw confidence
-
+                
                 xArray = np.array(xList)
                 yArray = np.array(yList)
                 plt.xlim( 0,imageWidth )
@@ -1082,7 +1084,7 @@ if __name__ == "__main__":
                 whiteProportion = 1/100
                 if checkFlag3D(pltImage,resizeScale,whiteProportion) == False:
                     imageFileInfo.is3D = False
-
+                
                 pilSave(img,f"./result/{fileName}","det","det",imageName)
 
                 img = Image.fromarray(npimg)
@@ -1154,7 +1156,7 @@ if __name__ == "__main__":
                             rightCnt = 0
                             for k in range(info.teethNum-teethCheckNum,info.teethNum):
                                 rightCnt += ( (info.teethLocationSet[k].x2 - info.teethLocationSet[k].x1)/(info.teethLocationSet[k].y2 - info.teethLocationSet[k].y1) )
-
+                            
                             if leftCnt > rightCnt:
                                 imageInfoSet[i].view = 'Right'
                                 rightViewCnt += 1
@@ -1213,7 +1215,7 @@ if __name__ == "__main__":
             #         imageInfoSet[i].view = 'Right'
             #     if imageInfoSet[i].imageName == 'upper occlusal.jpg':
             #         imageInfoSet[i].view = 'Up'
-
+            
             writeFile.close()
             imageFileInfo.photoImageSet = imageInfoSet[:]
 
@@ -1233,7 +1235,7 @@ if __name__ == "__main__":
                                     teethNode.labelId += 1*10
                                 else:
                                     teethNode.labelId += 2*10
-
+                    
                 elif imageInfo.view == 'Below':
                     dimensionDict = constructDimensionDict(imageInfo.teethNodeSet)
                     for labelId, dimensionTeethNodeSet in dimensionDict.items():
