@@ -185,6 +185,7 @@ for folder_name in os.listdir(result_folder_path):
                     polyLine = np.polyfit(nodeArray[0],nodeArray[1],2)
                     p = np.poly1d( polyLine )
 
+                    '''
                     # Find nodes far away from others
                     newnodeArray = []
                     for i in range(len(nodeArray[0])):
@@ -200,7 +201,7 @@ for folder_name in os.listdir(result_folder_path):
                     Q1 = np.percentile(node_df['y']-p(node_df['x']), 25)
                     Q3 = np.percentile(node_df['y']-p(node_df['x']), 75)
                     IQR = Q3 - Q1
-                    n = 1.5
+                    n = 1.0
 
                     upper = (node_df['y']-p(node_df['x'])) >= (Q3+n*IQR)
                     outputArray = np.array(np.where(upper))
@@ -221,6 +222,7 @@ for folder_name in os.listdir(result_folder_path):
                         nodeArray[1] = np.delete(nodeArray[1],outputArray[0])
                         for i in outputArray[0]:
                             del boxArray[i]
+                    '''
                     
                     # Find critical points
                     bounds = [0, Cutimage.width-1]
