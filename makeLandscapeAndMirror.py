@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import csv
 from PIL import Image
-from YOLO_DentMask_ori_copy_2 import getFace
+from getFace import getFace
 
 def makeImgLandscape(image):
     # Check if the image is in portrait orientation (height > width)
@@ -69,8 +69,8 @@ print('got faces in result folder')
 
 # mirror images base on face
 # Path to the 'result' folder
-result_folder_path = './result'
-output_folder_path = './rotatedAndMirrored'
+result_folder_path = './dataset/rotated'
+output_folder_path = './dataset/rotatedAndMirrored'
 
 for folder_name in os.listdir(result_folder_path):
     folder_path = os.path.join(result_folder_path, folder_name)
