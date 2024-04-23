@@ -848,8 +848,15 @@ def SAM(image, bbox):
     sam_checkpoint = "./ckpts/sam_vit_h_4b8939.pth"
     model_type = "vit_h"
 
-    #device = "cpu"
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+
+    x = torch.ones(1, device=device)
+    print (x)
 
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)
@@ -885,12 +892,14 @@ if __name__ == "__main__":
     print("Cuda is available = ",torch.cuda.is_available())
     print("Cuda version = ",torch.version.cuda)
     print("pytorch version = ",torch.__version__)
-
-    #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:2048"
-    isGPU = True
     isLabel = False
-    if isGPU:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    isCuda = False
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        isCuda = True
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+        isCuda = True
     else:
         device = torch.device("cpu")
     print("device -> ",device)
@@ -989,7 +998,7 @@ if __name__ == "__main__":
 
                 #image = cv2.imread(f"./{root}/{samdir}/{fileName}/{imageName}")
                 image = cv2.cvtColor(pltImage, cv2.COLOR_BGR2RGB)
-                if isGPU:
+                if isCuda:
                     image = cv2.resize(image, (imageWidth, imageHeight), interpolation=cv2.INTER_AREA)
                 oriMask = masks
                 masks = SAM(image, bbox)
@@ -1116,7 +1125,7 @@ if __name__ == "__main__":
                     # regression gradient ax^2 + bx + c = 0
                     a = info.polyLine[0]
                     if a > 0:
-                        info.image = np.flipud(info.image)
+                        info.image = np.fliplr(np.flipud(info.image))
                     break
 
             for info in imageInfoSet:
