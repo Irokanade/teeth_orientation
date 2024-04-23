@@ -1152,7 +1152,8 @@ if __name__ == "__main__":
                     for i in range( len(imageInfoSet) ):
                         if imageInfoSet[i].useFlag == False:
                             info = imageInfoSet[i]
-                            imageInfoSet[i].useFlag = True
+                            info.useFlag = True
+
                             info.teethLocationSet = sorted(info.teethLocationSet,key = lambda loc : (loc.x1+loc.x2)/2)
 
                             teethCheckNum = 3
@@ -1176,8 +1177,29 @@ if __name__ == "__main__":
                     for i in range( len(imageInfoSet) ):
                         if imageInfoSet[i].useFlag == False:
                             info = imageInfoSet[i]
-                            imageInfoSet[i].useFlag = True
+                            info.useFlag = True
+                            max_area = 0
+                            max_x = 0
+                            min_x = float('inf')
+                            max_y = 0
+                            min_y = float('inf')
+                            max_teeth_location: TeethLocation = None
+                            for teethLocation in info.teethLocationSet:
+                                area = abs(teethLocation.x2 - teethLocation.x1) * abs(teethLocation.y2 - teethLocation.y1)
+                                min_x = min(min_x, teethLocation.x1, teethLocation.x2)
+                                max_x = max(max_x, teethLocation.x1, teethLocation.x2)
+                                min_y = min(min_y, teethLocation.y1, teethLocation.y2)
+                                max_y = max(max_y, teethLocation.y1, teethLocation.y2)
 
+                                if area > max_area:
+                                    max_area = area
+                                    max_teeth_location = teethLocation
+                            average_y = (max_y + min_y) / 2
+                            max_average_y = (max_teeth_location.y1 + max_teeth_location.y2) / 2
+                            print(f'average:{average_y}')
+                            print(f'max:{max_average_y}')
+                            if max_average_y > average_y:
+                                info.image = np.fliplr(np.flipud(info.image))
                             oriH = len(info.grayData)
                             oriW = len(info.grayData[0])
 
