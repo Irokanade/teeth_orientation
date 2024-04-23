@@ -725,7 +725,7 @@ def makeResultDirProcess(fileName):
     os.makedirs(file,exist_ok=True)
     file = os.path.join(sampleDir,  fileName)
     os.makedirs(file,exist_ok=True)
-    createFile = ['det','seg','regression','sample','color','pre_processing','changeColor','mask','newNameSample']
+    createFile = ['det','seg','regression','sample','color','pre_processing','changeColor','mask','newNameSample', 'boundingBox', 'node']
     for name in createFile:
         tmp = os.path.join(redir, fileName, name)
         os.makedirs(tmp,exist_ok=True)
@@ -984,17 +984,36 @@ if __name__ == "__main__":
 
                 bbox = []
 
+                # processing bounding box
+                xList = []
+                yList = []
+
                 ### SAM ###
                 resize = 0.002
-                for box, mask in zip(boxes, masks):
-                    points = cv2.findNonZero(mask)
-                    x,y,w,h = cv2.boundingRect(points)
-                    x1 = int(x)
-                    x2 = int(x+w)
-                    y1 = int(y)
-                    y2 = int(y+h)
-                    one_box = [x1,y1,x2,y2]
-                    bbox.append(one_box)
+                # write to boundingBox folder
+                bbox_file_path = f"./result/{fileName}/boundingBox/box_{imageName[:-4]}.csv"
+                with open(bbox_file_path, "w", newline="") as bboxFile:
+                    csvWriter = csv.writer(bboxFile)
+                    for box, mask in zip(boxes, masks):
+                        points = cv2.findNonZero(mask)
+                        x,y,w,h = cv2.boundingRect(points)
+                        x1 = int(x)
+                        x2 = int(x+w)
+                        y1 = int(y)
+                        y2 = int(y+h)
+                        one_box = [x1,y1,x2,y2]
+                        bbox.append(one_box)
+
+                        csvWriter.writerow([x1, y1, x2, y2]) 
+                        xList.append( (x1+x2)/2 )
+                        yList.append( (y1+y2)/2 )
+
+                # write to node folder
+                node_file_path = f"./result/{fileName}/node/node_{imageName[:-4]}.csv"
+                with open(node_file_path, "w", newline="") as nodeFile:
+                    csvWriter = csv.writer(nodeFile)
+                    csvWriter.writerow(xList)
+                    csvWriter.writerow(yList)
 
                 #image = cv2.imread(f"./{root}/{samdir}/{fileName}/{imageName}")
                 image = cv2.cvtColor(pltImage, cv2.COLOR_BGR2RGB)
