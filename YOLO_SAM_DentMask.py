@@ -62,6 +62,22 @@ def scaleToAbsolute(teethScale,imageWidth,imageHeight):
 
     return TeethLocation(x-(w/2),y-(h/2),x+(w/2),y+(h/2))
 
+def edge_detection(info):
+    gray = cv2.cvtColor(info.image, cv2.COLOR_BGR2GRAY) if len(info.image.shape) == 3 else info.image
+
+    h, w = gray.shape
+    x_start = int(w * 0.3)   # Left 30%
+    x_end = int(w * 0.67)    # Right 67%
+    y_start = int(h * 0.20)  # Top 20%
+    y_end = int(h * 0.85)    # Bottom 85%
+
+    cropped_gray = gray[y_start:y_end, x_start:x_end]
+
+    edges = cv2.Canny(cropped_gray, 50, 150)
+    edge_count = cv2.countNonZero(edges)
+
+    return edge_count
+
 class ImageFile:
     def __init__(self,FileName):
         self.fileName = FileName
@@ -89,6 +105,8 @@ class PhotoImage:
         self.polyLine = polyLine
         #### mark ####
         self.regression = p
+        #### edge detection ####
+        self.edge_count = edge_detection(self)
 
 class TeethNode:
     def __init__(self,mask,box):
@@ -172,7 +190,6 @@ def sortTeeth(infoSet):
     infoSet = sorted(infoSet, key = lambda x : x.teethNum, reverse = True)
     for index, info in enumerate(infoSet):
         info.teethRank = index + 1
-
 
 def checkFlag3D(oriPltImage,resizeScale,proportion):
     pltImage = cv2.resize(oriPltImage, dsize=(int(imageWidth*resizeScale),int(imageHeight*resizeScale)), interpolation=cv2.INTER_CUBIC)
@@ -1146,16 +1163,34 @@ if __name__ == "__main__":
                     if a > 0:
                         info.image = np.fliplr(np.flipud(info.image))
                     break
-
+            compared_info = None
             for info in imageInfoSet:
                 if info.teethRank != 1 and info.gradientRank <= 2 and info.useFlag == False:
-                    if info.gradient >= 0:
-                        info.view = 'Up'
-                        csvWriter.writerow([info.imageName,"Up"])
-                    else :
-                        info.view = 'Below'
-                        csvWriter.writerow([info.imageName,"Below"])
-                    info.useFlag = True
+                    if compared_info is None:
+                        compared_info = info
+                    else:
+                        if compared_info.edge_count > info.edge_count:
+                            compared_info.view = 'Below'
+                            info.view = 'Up'
+                        else:
+                            compared_info.view = 'Up'
+                            info.view = 'Below'
+
+                        for i in [compared_info, info]:
+                            if i.view == 'Below' and i.gradient >= 0:
+                                i.image = np.fliplr(np.flipud(i.image))
+                                csvWriter.writerow([i.imageName, "Below Rotated"])
+                            elif i.view == 'Below':
+                                csvWriter.writerow([i.imageName, "Below"])
+                            elif i.view == 'Up' and i.gradient < 0:
+                                i.image = np.fliplr(np.flipud(i.image))
+                                csvWriter.writerow([i.imageName, "Up Rotated"])
+                            else:
+                                csvWriter.writerow([i.imageName, "Up"])
+
+                            i.useFlag = True
+
+                        compared_info = None
 
             leftRightCnt = 0
             for i in range( len(imageInfoSet) ):
@@ -1193,16 +1228,11 @@ if __name__ == "__main__":
                                 leftViewCnt += 1
                                 csvWriter.writerow([info.imageName,"Left"])
                 else :
-                    for i in range( len(imageInfoSet) ):
-                        if imageInfoSet[i].useFlag == False:
+                    for i in range(len(imageInfoSet)):
+                        if not imageInfoSet[i].useFlag:
                             info = imageInfoSet[i]
                             info.useFlag = True
-                            max_area = 0
-                            max_x = 0
-                            min_x = float('inf')
-                            max_y = 0
-                            min_y = float('inf')
-                            max_teeth_location: TeethLocation = None
+
                             for teethLocation in info.teethLocationSet:
                                 area = abs(teethLocation.x2 - teethLocation.x1) * abs(teethLocation.y2 - teethLocation.y1)
                                 min_x = min(min_x, teethLocation.x1, teethLocation.x2)
