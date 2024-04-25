@@ -560,9 +560,6 @@ def teethNodeCombine(teethNodeSet,i1,i2):
     node2 = teethNodeSet[i2]
 
     # 合併 mask
-    # print(node1.mask.shape)
-    # print(node2.mask.shape)
-    # print(type(node2.mask))
 
     # dilate
     kernel = np.ones( (3,3), np.uint8 )
@@ -575,17 +572,6 @@ def teethNodeCombine(teethNodeSet,i1,i2):
     #erode
     mergedMask = cv2.erode(mergedMask, kernel, iterations = 10)
 
-    #cv2.imshow('ori',ori)
-    # cv2.imshow('after',mergedMask)
-    # cv2.waitKey()
-
-    # print('node 1 label' , node1.labelId)
-    # print('node 2 label' , node2.labelId)
-    # cv2.imshow('mask 1',node1.mask)
-    # cv2.waitKey()
-    # cv2.imshow('mask 2',node2.mask)
-    # cv2.waitKey()
-    # cv2.imshow('mask merge',mergedMask)
 
     # 合併 bounding box
     points = cv2.findNonZero(mergedMask)
@@ -595,10 +581,6 @@ def teethNodeCombine(teethNodeSet,i1,i2):
     xmax = int(x+w)
     ymin = int(y)
     ymax = int(y+h)
-    # mergedBox = TeethLocation(min(node1.box.x1, node2.box.x1),
-    #                           min(node1.box.y1, node2.box.y1),
-    #                           max(node1.box.x2, node2.box.x2),
-    #                           max(node1.box.y2, node2.box.y2))
     mergedBox = TeethLocation(xmin, ymin, xmax, ymax)
 
     # 建立新的合併後的 TeethNode
@@ -748,7 +730,6 @@ def makeResultDirProcess(fileName):
         os.makedirs(tmp,exist_ok=True)
 
 def getBoundingBoxes(model,threshold,imageInfo):
-    
     torchImage = torch.as_tensor(np.array(imageInfo.image)[...,:3]/255, dtype=torch.float32).permute(2,0,1).unsqueeze(0)
     torchImage = torchImage.to(device)
     output = model(torchImage)[0]
@@ -759,8 +740,6 @@ def getBoundingBoxes(model,threshold,imageInfo):
     classes = output["labels"]
     zippedData = zip(boxes,masks, scores,classes)
     zippedData = sorted(zippedData,key=lambda x:x[2],reverse=True)
-    # if len(zippedData) > 2:
-    #     zippedData = zippedData[:2]
     retBoxes = []
 
     leftBoxes = []
@@ -776,29 +755,13 @@ def getBoundingBoxes(model,threshold,imageInfo):
             y1 = int(y1)
             x2 = int(x2)
             y2 = int(y2)
-            # print(type(score.item()))
-            # print(score.item())
+
             if (x1+x2)/2 < (imageInfo.width/2): #left
                 leftBoxes.append(TeethLocation(x1,y1,x2,y2))
                 leftScores.append(score.item())
             else:
-                #print(x1,y1,x2,y2)
-                #print('score = ',score.item())
                 rightBoxes.append(TeethLocation(x1,y1,x2,y2))
                 rightScores.append(score.item())
-    #找左右,y軸最上or最下的牙齒
-    # if imageInfo.view == 'Up':
-    #     if len(leftBoxes) > 0:
-    #         retBoxes.append(max(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
-    #     if len(rightBoxes) > 0:
-    #         retBoxes.append(max(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
-    # elif imageInfo.view == 'Below':
-    #     if len(leftBoxes) > 0:
-    #         retBoxes.append(min(leftBoxes, key=lambda box: (box[0].y1+box[0].y2)/2  ))
-    #     if len(rightBoxes) > 0:
-    #         retBoxes.append(min(rightBoxes, key=lambda box: (box[0].y1+box[0].y2)/2))
-    # else:
-    #     print('590 line error!!!!')
 
 
     #找左右分數最大，各一顆
@@ -924,8 +887,7 @@ if __name__ == "__main__":
 
 
 
-    # Test all image
-    # path setting
+    # Test all image | path setting
     # load every file in ./dataset/Sample
     root = 'dataset'
     samdir = 'sample'
@@ -963,8 +925,6 @@ if __name__ == "__main__":
 
             for imageName in imgSet:
                 print(imageName,' => DETECT teeth ')
-
-                #pltImage = mpimg.imread(f"./{root}/{samdir}/{fileName}/{imageName}")
                 image_path = os.path.join(root, samdir, fileName, imageName)
                 image = Image.open(image_path)
                 image = exif_transpose(image)
@@ -975,11 +935,8 @@ if __name__ == "__main__":
 
                 # Mirror flip all image
                 image = image.transpose(Image.FLIP_LEFT_RIGHT)
-                # idealSize = 1024
-                # image.thumbnail((idealSize,idealSize))
 
                 results = list(model(image, conf=confident_thre))
-                #results = list(model(image, conf=confident_thre))
                 result = results[0]
                 pltImage = np.array(image)
                 if result.masks is None:
@@ -1044,15 +1001,7 @@ if __name__ == "__main__":
                     mask = np.where(mask > confident_thre, 255, 0).astype(np.uint8)
 
                 plt.axis('off')
-                #plt.show()
 
-                #plt.savefig(f"./SAM_mask/{fileName}/{imageName[:-4]}.png")
-                ### SAM ###
-
-                #print( "img type = " ,type(img) )
-                #print( "draw type = ",type(draw) )
-
-                # processing bounding box
                 xList = []
                 yList = []
 
@@ -1079,9 +1028,6 @@ if __name__ == "__main__":
                     x2 = int(x+w)
                     y1 = int(y)
                     y2 = int(y+h)
-                    #print(x1,y1, x2, y2)
-                    # cv2.imshow('mask',mask)
-                    # cv2.waitKey()
 
                     teethLocationSet.append( TeethLocation(x1,y1,x2,y2) )
 
@@ -1135,8 +1081,6 @@ if __name__ == "__main__":
 
                 pilSave(img,f"./result/{fileName}","seg","seg",imageName)
                 pilSave(black_img,f"./result/{fileName}","seg","mask",imageName)
-
-                # exit()
 
             writeFile = open(f"./result/{fileName}/imageClassification.csv",mode="w",newline="")
             csvWriter = csv.writer(writeFile)
@@ -1233,20 +1177,40 @@ if __name__ == "__main__":
                             info = imageInfoSet[i]
                             info.useFlag = True
 
+                            teeth_with_metrics = []
+                            max_teeth_location = None
+                            image_width = info.image.shape[1]
                             for teethLocation in info.teethLocationSet:
-                                area = abs(teethLocation.x2 - teethLocation.x1) * abs(teethLocation.y2 - teethLocation.y1)
-                                min_x = min(min_x, teethLocation.x1, teethLocation.x2)
-                                max_x = max(max_x, teethLocation.x1, teethLocation.x2)
-                                min_y = min(min_y, teethLocation.y1, teethLocation.y2)
-                                max_y = max(max_y, teethLocation.y1, teethLocation.y2)
+                                if teethLocation.x2 == image_width or teethLocation.x1 == 0:
+                                    continue
+                                height = abs(teethLocation.y2 - teethLocation.y1)
+                                width = abs(teethLocation.x2 - teethLocation.x1)
+                                area = height * width
+                                x_coordinates = (teethLocation.x1 + teethLocation.x2) / 2
+                                teeth_with_metrics.append((area, width, height, x_coordinates, teethLocation))
 
-                                if area > max_area:
-                                    max_area = area
-                                    max_teeth_location = teethLocation
+                            teeth_with_metrics.sort(key=lambda x: x[3])
+
+                            teeth_edge = teeth_with_metrics[:2] + teeth_with_metrics[-2:]
+                            height_greater_than_width = [teeth for teeth in teeth_edge if teeth[2] > teeth[1]]
+                            if len(height_greater_than_width) >= 2:
+                                sorted_by_area = sorted(height_greater_than_width, key=lambda x: x[0], reverse=True)
+                                area_ratio = sorted_by_area[1][0] / sorted_by_area[0][0]
+                                if 0.95 >= area_ratio >= 0.8:
+                                    max_teeth_location = max(sorted_by_area[:2], key=lambda x: x[2])[4]
+                                else:
+                                    max_teeth_location = sorted_by_area[0][4]
+                            elif height_greater_than_width:
+                                max_teeth_location = max(height_greater_than_width, key=lambda x: x[0])[4]
+                            else:
+                                sorted_by_width = sorted(teeth_edge, key=lambda x: x[1])
+                                top_two_smallest_width = sorted(sorted_by_width[:2], key=lambda x: x[0], reverse=True)
+                                max_teeth_location = top_two_smallest_width[0][4]
+                            max_y = max(max(teethLocation.y1, teethLocation.y2) for teethLocation in info.teethLocationSet)
+                            min_y = min(min(teethLocation.y1, teethLocation.y2) for teethLocation in info.teethLocationSet)
                             average_y = (max_y + min_y) / 2
                             max_average_y = (max_teeth_location.y1 + max_teeth_location.y2) / 2
-                            print(f'average:{average_y}')
-                            print(f'max:{max_average_y}')
+
                             if max_average_y > average_y:
                                 info.image = np.fliplr(np.flipud(info.image))
                             oriH = len(info.grayData)
@@ -1280,19 +1244,6 @@ if __name__ == "__main__":
                                 rightViewCnt += 1
                                 csvWriter.writerow([info.imageName,"Right"])
                 checkClassication(leftViewCnt,rightViewCnt,imageInfoSet)
-
-            # for i in range( len(imageInfoSet) ):
-            #     print(imageInfoSet[i].imageName)
-            #     if imageInfoSet[i].imageName == 'frontal.jpg':
-            #         imageInfoSet[i].view = 'Face'
-            #     if imageInfoSet[i].imageName == 'left buccal.jpg':
-            #         imageInfoSet[i].view = 'Left'
-            #     if imageInfoSet[i].imageName == 'lower occlusal.jpg':
-            #         imageInfoSet[i].view = 'Below'
-            #     if imageInfoSet[i].imageName == 'right buccal.jpg':
-            #         imageInfoSet[i].view = 'Right'
-            #     if imageInfoSet[i].imageName == 'upper occlusal.jpg':
-            #         imageInfoSet[i].view = 'Up'
 
             writeFile.close()
             imageFileInfo.photoImageSet = imageInfoSet[:]
@@ -1399,31 +1350,6 @@ if __name__ == "__main__":
                 else:
                     print('classification error view',file=specialLogFile)
 
-            # viewModel = YOLO('./ckpts/4View.pt')
-            # for imageInfo in imageFileInfo.photoImageSet:
-            #     results = list(model(imageInfo.image, conf=confident_thre))
-            #     result = results[0]
-
-            #     masks = result.masks.masks.cpu().numpy()
-            #     boxes = result.boxes.cpu().numpy()
-            #     teethLocViewDict = {}
-            #     for box,mask in zip(boxes,masks):
-            #         teethCnt += 1
-
-            #         points = cv2.findNonZero(mask)
-            #         x,y,w,h = cv2.boundingRect(points)
-            #         x1 = int(x)
-            #         x2 = int(x+w)
-            #         y1 = int(y)
-            #         y2 = int(y+h)
-            #         teethLocViewDict[(x1,y1,x2,y2)] = int(box.cls[0])
-            #     viewTeethThreshold = 0.9
-            #     for teethNode in imageInfo.teethNodeSet:
-            #         for loc, view in teethLocViewDict.items():
-            #             if countIou(teethNode.box,TeethLocation(loc[0], loc[1], loc[2], loc[3])) > viewTeethThreshold:
-            #                 teethNode.labelId += int(view)*10
-            #                 break                           
-
     #########著色#########
             with open('./utils/teeth_rgb.json') as jf:
                 with open('./utils/error_rgb.json') as errorJson:
@@ -1476,13 +1402,7 @@ if __name__ == "__main__":
                                 font = ImageFont.truetype("./utils/arial.ttf", fontSize)
                                 draw.text((x,y),str(teethNode.labelId),font = font)
                                 imgDraw = ImageDraw.Draw(img)
-                                #imgDraw.rectangle([(teethNode.box.x1, teethNode.box.y1), (teethNode.box.x2, teethNode.box.y2)],outline = "red", width=5)
-                        # print(type( Image.fromarray(np.hstack([imageInfo.image,np.array(img)])) ))
-                        # print( type(black_img) )
                         pilSave(Image.fromarray(np.hstack([imageInfo.image,np.array(img)])),f"./result/{fileName}","color","seg",saveName) 
                         pilSave(black_img,f"./result/{fileName}","color","mask",saveName)
 
 
-
-
-   
