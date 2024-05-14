@@ -69,7 +69,7 @@ def edge_detection(info):
     x_start = int(w * 0.3)   # Left 30%
     x_end = int(w * 0.67)    # Right 67%
     y_start = int(h * 0.20)  # Top 20%
-    y_end = int(h * 0.85)    # Bottom 85%
+    y_end = int(h * 0.92)    # Bottom 92%
 
     cropped_gray = gray[y_start:y_end, x_start:x_end]
 
