@@ -1,6 +1,7 @@
 import os
 import torch
 import pickle
+import time
 
 from tqdm import tqdm
 from ultralytics import YOLO
@@ -11,6 +12,7 @@ import PIL.ImageOps
 from PIL import Image, ImageDraw, ImageFont
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 ###### 標號 ######
 import csv
@@ -22,10 +24,10 @@ import sys
 sys.path.append("..")
 from segment_anything import sam_model_registry, SamPredictor
 
-def tensor2image(tensor):
+'''def tensor2image(tensor):
     tensor = tensor*255
     tensor = np.array(tensor.permute(1, 2, 0), dtype=np.uint8)
-    return Image.fromarray(tensor)
+    return Image.fromarray(tensor)'''
 
 def viewOfficial(view):
     if view == 'Up':
@@ -49,7 +51,7 @@ def absoluteToScale(teethLocation,imageWidth,imageHeight):
     y2 = teethLocation.y2
     return [ ((x1+x2)/2)/imageWidth,((y1+y2)/2)/imageHeight,((x2-x1))/imageWidth,((y2-y1))/imageHeight ]
 
-def scaleToAbsolute(teethScale,imageWidth,imageHeight):
+'''def scaleToAbsolute(teethScale,imageWidth,imageHeight):
     scaleX = teethScale[0]
     scaleY = teethScale[1]
     scaleW = teethScale[2]
@@ -60,7 +62,7 @@ def scaleToAbsolute(teethScale,imageWidth,imageHeight):
     w = scaleW*imageWidth
     h = scaleH*imageHeight
 
-    return TeethLocation(x-(w/2),y-(h/2),x+(w/2),y+(h/2))
+    return TeethLocation(x-(w/2),y-(h/2),x+(w/2),y+(h/2))'''
 
 def edge_detection(info):
     gray = cv2.cvtColor(info.image, cv2.COLOR_BGR2GRAY) if len(info.image.shape) == 3 else info.image
@@ -173,12 +175,12 @@ def exif_transpose(img):
 
     return img
 
-def to_serializable(val):
+'''def to_serializable(val):
     if hasattr(val, '__dict__'):
         return val.__dict__
     elif hasattr(val, "tolist"):
         return val.tolist()
-    return val
+    return val'''
 
 def sortGradient(infoSet):
     infoSet = sorted(infoSet,key = lambda x : x.absGradient, reverse = True)
@@ -216,32 +218,32 @@ def checkFlag3D(oriPltImage,resizeScale,proportion):
     else:
         return True
 
-def findTeethScaleByName(imageInfoSet,imgName):
+'''def findTeethScaleByName(imageInfoSet,imgName):
     for imgInfo in imageInfoSet:
         if imgInfo.imageName == imgName:
-            return imgInfo.teethScaleSet
+            return imgInfo.teethScaleSet'''
 
-def findInfoByName(imageInfoSet,imgName):
+'''def findInfoByName(imageInfoSet,imgName):
     for imgInfo in imageInfoSet:
         if imgInfo.imageName == imgName:
-            return imgInfo
+            return imgInfo'''
 
-def teethLocScale(teethLoc,scale):
+'''def teethLocScale(teethLoc,scale):
     teethWidth  = teethLoc.x2 - teethLoc.x1
     teethHeight = teethLoc.y2 - teethLoc.y1
     xMiddle = (teethLoc.x2 + teethLoc.x1)/2
     yMiddle = (teethLoc.y2 + teethLoc.y1)/2
     teethWidth = teethWidth * scale
     teethHeight = teethHeight * scale
-    return TeethLocation(xMiddle-teethWidth/2,yMiddle-teethHeight/2,xMiddle+teethWidth/2,yMiddle+teethHeight/2)
+    return TeethLocation(xMiddle-teethWidth/2,yMiddle-teethHeight/2,xMiddle+teethWidth/2,yMiddle+teethHeight/2)'''
 
-def absoluteXYWHtoLoc(x,y,w,h):
-    return TeethLocation(x-w/2,y-h/2,x+w/2,y+h/2)
+'''def absoluteXYWHtoLoc(x,y,w,h):
+    return TeethLocation(x-w/2,y-h/2,x+w/2,y+h/2)'''
 
-def countIouScale(boxA,boxB,scale):
-    return countIou(teethLocScale(boxA,scale),teethLocScale(boxB,scale))
+'''def countIouScale(boxA,boxB,scale):
+    return countIou(teethLocScale(boxA,scale),teethLocScale(boxB,scale))'''
 
-def countIou(boxA,boxB):
+'''def countIou(boxA,boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
 	xA = max(boxA.x1, boxB.x1)
 	yA = max(boxA.y1, boxB.y1)
@@ -258,7 +260,7 @@ def countIou(boxA,boxB):
 	# areas - the interesection area
 	iou = interArea / float(boxAArea + boxBArea - interArea)
 	# return the intersection over union value
-	return iou
+	return iou'''
 
 # def labelToImageInfo(baseTeethNodeSet,fillTeethNodeSet):
 #     #base為要更新的class
@@ -268,7 +270,7 @@ def countIou(boxA,boxB):
 #             if fill.box == base.box:
 #                 base.labelId = fill.labelId
 
-def doubleCheckPivot(missingLabelId,imageInfo):
+'''def doubleCheckPivot(missingLabelId,imageInfo):
 
     #print('double check pivot')
     #print('double missing',missingLabelId)
@@ -291,16 +293,16 @@ def doubleCheckPivot(missingLabelId,imageInfo):
         for lableId in missingLabelId:
             if lableId == checkLabelId:
                 return False
-    return True
+    return True'''
 
-def labelOffset(teethNodeSet,offset):
+'''def labelOffset(teethNodeSet,offset):
     for teethNode in teethNodeSet:
-        teethNode.labelId += offset
+        teethNode.labelId += offset'''
 
 def boxMiddle(box):
     return (box.x1 + box.x2)/2 , (box.y1 + box.y2)/2
 
-def missingLabel(view,leftTeethNodeSet,rightTeethNodeSet):
+'''def missingLabel(view,leftTeethNodeSet,rightTeethNodeSet):
     missingLabelId = []
 
     leftDimension = -1
@@ -325,9 +327,9 @@ def missingLabel(view,leftTeethNodeSet,rightTeethNodeSet):
                     break
             if check == False:
                 missingLabelId.append(checkLabel)
-    return missingLabelId
+    return missingLabelId'''
 
-def extract_box_brightness(image, box):
+'''def extract_box_brightness(image, box):
     x1 = max(int(box.x1), 0)
     y1 = max(int(box.y1), 0)
     x2 = min(int(box.x2), image.shape[1])
@@ -338,17 +340,17 @@ def extract_box_brightness(image, box):
     #print(bounding_box_region.shape)
 
     brightness = np.mean(bounding_box_region)
-    return brightness
+    return brightness'''
 
-def extract_mask_brightness(image, mask):
+'''def extract_mask_brightness(image, mask):
     masked_pixels = image[np.where(mask > 0)]
 
     brightness = np.mean(masked_pixels)
 
-    return brightness
+    return brightness'''
 
 
-def check5Missing(teethNodeSet,sixBoxes):
+'''def check5Missing(teethNodeSet,sixBoxes):
     iouThreshold = 0.8
     for i in range(len(teethNodeSet)):
         if teethNodeSet[i].labelId % 10 == 5: #check 5 missing
@@ -360,10 +362,10 @@ def check5Missing(teethNodeSet,sixBoxes):
                             teethNodeSet[k].labelId += 1
                     print('5Missing!!!',file = specialLogFile)
                     break
-    return teethNodeSet
+    return teethNodeSet'''
 
 
-def doubleCheckPosition(imageInfo,leftTeethNodeSet,rightTeethNodeSet):
+'''def doubleCheckPosition(imageInfo,leftTeethNodeSet,rightTeethNodeSet):
     targetOffset = -1
     checkNum = 3
     minDev = 1e9
@@ -397,9 +399,9 @@ def doubleCheckPosition(imageInfo,leftTeethNodeSet,rightTeethNodeSet):
 
     #print('offset = ',targetOffset)
     #print('after = ',leftTeethNodeSet)
-    #print('after = ',rightTeethNodeSet)
+    #print('after = ',rightTeethNodeSet)'''
 
-def slidingTeeth(regression,baseTeethLoc,slidingOverlapRatio,xStep,state):
+'''def slidingTeeth(regression,baseTeethLoc,slidingOverlapRatio,xStep,state):
     teethWidth  = (baseTeethLoc.x2 - baseTeethLoc.x1)
     teethHeight = (baseTeethLoc.y2 - baseTeethLoc.y1)
     Xstart = int((baseTeethLoc.x2 + baseTeethLoc.x1)/2)
@@ -408,9 +410,9 @@ def slidingTeeth(regression,baseTeethLoc,slidingOverlapRatio,xStep,state):
             Xstart -= xStep
         else:
             Xstart += xStep
-    return absoluteXYWHtoLoc(Xstart,regression(Xstart),teethWidth,teethHeight)
+    return absoluteXYWHtoLoc(Xstart,regression(Xstart),teethWidth,teethHeight)'''
 
-def teethMatch(baseTeethLoc,teethNodeSet,dimension,xStep,slidingOverlapRatio,teethOverlapRatio,state,teethScaleRatio,xAverage,yAverage,imageInfo):
+'''def teethMatch(baseTeethLoc,teethNodeSet,dimension,xStep,slidingOverlapRatio,teethOverlapRatio,state,teethScaleRatio,xAverage,yAverage,imageInfo):
     #print("wow!!!!!!!!!!!!!!!!!",dimension)
     missingLabelId = []
     if len(teethNodeSet) == 0:
@@ -444,11 +446,11 @@ def teethMatch(baseTeethLoc,teethNodeSet,dimension,xStep,slidingOverlapRatio,tee
                 baseTeethLoc = absoluteXYWHtoLoc((baseTeethLoc.x1 + baseTeethLoc.x2)/2,(baseTeethLoc.y1 + baseTeethLoc.y2)/2,xAverage*molarEnlargeRatio,yAverage*molarEnlargeRatio)
             baseTeethLoc = slidingTeeth(imageInfo.regression,baseTeethLoc,slidingOverlapRatio,xStep,state) #移動baseLoc到剛好slidingOverlapRatio Iou比例
 
-    return missingLabelId,teethNodeSet
+    return missingLabelId,teethNodeSet'''
 
 
 
-def positionMissing(imageInfo):
+'''def positionMissing(imageInfo):
     leftTeethNodeSet = [] #第1/4象限
     rightTeethNodeSet = [] #第2/3象限
     missingLabelId = [] 
@@ -506,9 +508,9 @@ def positionMissing(imageInfo):
     missingTmp,rightTeethNodeSet = teethMatch(baseTeethLoc,rightTeethNodeSet,rightDimension,xStep,slidingOverlapRatio,teethOverlapRatio,'Right',teethScaleRatio,xAverage,yAverage,imageInfo)
     missingLabelId += missingTmp
 
-    return missingLabelId,leftTeethNodeSet,rightTeethNodeSet
+    return missingLabelId,leftTeethNodeSet,rightTeethNodeSet'''
 
-def XIou(boxA,boxB):
+'''def XIou(boxA,boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
 	xA = max(boxA.x1, boxB.x1)
 	xB = min(boxA.x2, boxB.x2)
@@ -523,9 +525,9 @@ def XIou(boxA,boxB):
 	# areas - the interesection area
 	iou = interArea / float(boxAArea + boxBArea - interArea)
 	# return the intersection over union value
-	return iou
+	return iou'''
 
-def YIou(boxA,boxB):
+'''def YIou(boxA,boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
 	yA = max(boxA.y1, boxB.y1)
 	yB = min(boxA.y2, boxB.y2)
@@ -540,10 +542,10 @@ def YIou(boxA,boxB):
 	# areas - the interesection area
 	iou = interArea / float(boxAArea + boxBArea - interArea)
 	# return the intersection over union value
-	return iou
+	return iou'''
 
 
-def checkXYOverlap(teethNodeSet,XOverlapRatio,YOverlapRatio): #X重疊度超過overlapRatio 回傳False
+'''def checkXYOverlap(teethNodeSet,XOverlapRatio,YOverlapRatio): #X重疊度超過overlapRatio 回傳False
     teethNodeSetTmp = teethNodeSet[:]
     teethNodeSetTmp = sorted(teethNodeSetTmp ,key = lambda x : ((x.box.x2+x.box.x1)/2.0),reverse = False)
 
@@ -552,9 +554,9 @@ def checkXYOverlap(teethNodeSet,XOverlapRatio,YOverlapRatio): #X重疊度超過o
             return False
         if YIou(teethNodeSetTmp[i].box,teethNodeSetTmp[i+1].box) < YOverlapRatio:
             return False
-    return True
+    return True'''
 
-def teethNodeCombine(teethNodeSet,i1,i2):
+'''def teethNodeCombine(teethNodeSet,i1,i2):
     # 取得要合併的兩個 TeethNode
     node1 = teethNodeSet[i1]
     node2 = teethNodeSet[i2]
@@ -598,9 +600,9 @@ def teethNodeCombine(teethNodeSet,i1,i2):
     # 將合併後的節點加入到列表中
     teethNodeSet.append(mergedNode)
 
-    return teethNodeSet
+    return teethNodeSet'''
 
-def toothErrorDetectionCombine(teethNodeSet,XOverlapRatio):
+'''def toothErrorDetectionCombine(teethNodeSet,XOverlapRatio):
     lock = True
     while lock:
         lock = False
@@ -621,10 +623,10 @@ def toothErrorDetectionCombine(teethNodeSet,XOverlapRatio):
                     break
             if lock :
                 break
-    return teethNodeSet
+    return teethNodeSet'''
 
 
-def leftRightLabel(imageInfo):
+'''def leftRightLabel(imageInfo):
     teethNodeSet = imageInfo.teethNodeSet
     teethNodeSet = sorted(teethNodeSet ,key = lambda x : ((x.box.y2+x.box.y1)/2.0),reverse = False)
     minDev = 1e9
@@ -693,7 +695,7 @@ def leftRightLabel(imageInfo):
             belowTeethNodeSet[ belowIndex ].labelId = labelId
             belowIndex += 1
 
-    return upTeethNodeSet,belowTeethNodeSet
+    return upTeethNodeSet,belowTeethNodeSet'''
 
 def pilSave(image,path,fileLabel,prefix,imageName):
     check = imageName.split('.')
@@ -724,12 +726,12 @@ def makeResultDirProcess(fileName):
     os.makedirs(file,exist_ok=True)
     file = os.path.join(sampleDir,  fileName)
     os.makedirs(file,exist_ok=True)
-    createFile = ['det','seg','regression','sample','color','pre_processing','changeColor','mask','newNameSample', 'boundingBox', 'node']
+    createFile = ['regression'] #'det','seg','color','pre_processing','changeColor','mask','newNameSample', ,'sample','boundingBox', 'node'
     for name in createFile:
         tmp = os.path.join(redir, fileName, name)
         os.makedirs(tmp,exist_ok=True)
 
-def getBoundingBoxes(model,threshold,imageInfo):
+'''def getBoundingBoxes(model,threshold,imageInfo):
     torchImage = torch.as_tensor(np.array(imageInfo.image)[...,:3]/255, dtype=torch.float32).permute(2,0,1).unsqueeze(0)
     torchImage = torchImage.to(device)
     output = model(torchImage)[0]
@@ -781,7 +783,7 @@ def getBoundingBoxes(model,threshold,imageInfo):
 
     pilSave(drawImage,f"./result/{fileName}","det","det_upLowerSix",imageInfo.imageName)
 
-    return retBoxes
+    return retBoxes'''
 
 def checkClassication(leftCnt, rightCnt , imageInfoSet):
     if leftCnt > 1 or rightCnt > 1:
@@ -813,11 +815,11 @@ def show_mask(mask, ax, random_color=False):
     mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
     ax.imshow(mask_image)
 
-def show_points(coords, labels, ax, marker_size=375):
+'''def show_points(coords, labels, ax, marker_size=375):
     pos_points = coords[labels==1]
     neg_points = coords[labels==0]
     ax.scatter(pos_points[:, 0], pos_points[:, 1], color='green', marker='*', s=marker_size, edgecolor='white', linewidth=1.25)
-    ax.scatter(neg_points[:, 0], neg_points[:, 1], color='red', marker='*', s=marker_size, edgecolor='white', linewidth=1.25)   
+    ax.scatter(neg_points[:, 0], neg_points[:, 1], color='red', marker='*', s=marker_size, edgecolor='white', linewidth=1.25) '''
 
 def show_box(box, ax):
     x0, y0 = box[0], box[1]
@@ -835,6 +837,7 @@ def SAM(image, bbox):
     else:
         device = torch.device("cpu")
 
+    #x = torch.ones(1, device=device)
     x = torch.ones(1, device=device)
     print (x)
 
@@ -869,6 +872,7 @@ def SAM(image, bbox):
 ### SAM ###
 
 if __name__ == "__main__":
+    print( time.ctime() )
     print("Cuda is available = ",torch.cuda.is_available())
     print("Cuda version = ",torch.version.cuda)
     print("pytorch version = ",torch.__version__)
@@ -944,7 +948,7 @@ if __name__ == "__main__":
 
                 pltImage = cv2.resize(pltImage, result.masks.data.shape[1:][::-1], interpolation=cv2.INTER_AREA)
                 image = Image.fromarray(np.uint8(pltImage))
-                pilSave(image,f"./result/{fileName}","sample","",imageName)
+                #pilSave(image,f"./result/{fileName}","sample","",imageName)
 
                 imageWidth = len(pltImage[0])
                 imageHeight = len(pltImage)
@@ -964,41 +968,204 @@ if __name__ == "__main__":
 
                 ### SAM ###
                 resize = 0.002
+                
                 # write to boundingBox folder
+                '''
                 bbox_file_path = f"./result/{fileName}/boundingBox/box_{imageName[:-4]}.csv"
                 with open(bbox_file_path, "w", newline="") as bboxFile:
-                    csvWriter = csv.writer(bboxFile)
-                    for box, mask in zip(boxes, masks):
-                        points = cv2.findNonZero(mask)
-                        x,y,w,h = cv2.boundingRect(points)
-                        x1 = int(x)
-                        x2 = int(x+w)
-                        y1 = int(y)
-                        y2 = int(y+h)
-                        one_box = [x1,y1,x2,y2]
-                        bbox.append(one_box)
+                    #csvWriter = csv.writer(bboxFile)
+                '''
+                #print( "length of boxes = ", len(boxes) )
+                maxX, maxY = 0, 0
+                minX, minY = img.width, img.height
+                for box, mask in zip(boxes, masks):
+                    points = cv2.findNonZero(mask)
+                    
+                    x,y,w,h = cv2.boundingRect(points)
+                    x1 = int(x)
+                    x2 = int(x+w)
+                    y1 = int(y)
+                    y2 = int(y+h)
+                    one_box = [x1,y1,x2,y2]
+                    bbox.append(one_box)
+                    if x2 > maxX:
+                        maxX = x2
+                    if x1 < minX:
+                        minX = x1
+                    if y2 > maxY:
+                        maxY = y2
+                    if y1 < minY:
+                        minY = y1
 
-                        csvWriter.writerow([x1, y1, x2, y2]) 
-                        xList.append( (x1+x2)/2 )
-                        yList.append( (y1+y2)/2 )
+                    #csvWriter.writerow([x1, y1, x2, y2]) 
+                    xList.append( (x1+x2)/2 )
+                    yList.append( (y1+y2)/2 )
 
+                #if imageName == 'DSCF3120.JPG':
+                #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+
+                xArray = np.array(xList)
+                yArray = np.array(yList)
+                polyLine = np.polyfit(xArray,yArray,2)
+                p = np.poly1d( polyLine )
+                relx = 0
+                for i in range(len(xList)):
+                    relx += (abs(p(xList[i])-yList[i]))
+                relx = relx / len(xList)
+                polyLine = np.polyfit(yArray,xArray,2)
+                p = np.poly1d( polyLine )
+                rely = 0
+                for i in range(len(xList)):
+                    rely += (abs(p(yList[i])-xList[i]))
+                rely = rely / len(yList)
+                if relx > rely:
+                    # Mirror flip back
+                    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                    for i in range(len(xList)):
+                        xList[i] = image.width - 1 - xList[i]
+                        bbox[i] = [image.width-1-bbox[i][2], bbox[i][1], image.width-1-bbox[i][0], bbox[i][3]]
+                    '''for mask in masks:
+                        new_msk = [[] for _ in range(image.height)]
+                        for i in range( image.height ):
+                            for j in range( image.width ):
+                                new_msk[i].append(mask[i][image.width-1-j])
+                        mask = new_msk'''
+                    tmp = maxX
+                    maxX = image.width - minX
+                    minX = image.width - tmp
+
+                    #if imageName == 'DSCF3120.JPG':
+                    #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+                    
+                    # Rotate the image if height is greater than width
+                    image = image.rotate(90, expand=True)
+                    for i in range(len(xList)):
+                        tmp = xList[i]
+                        xList[i] = image.width - 1 - yList[i]
+                        yList[i] = tmp
+                        x1, y1, x2, y2 = bbox[i][0], bbox[i][1], bbox[i][2], bbox[i][3]
+                        bbox[i] = [y1, image.height-1-x2, y2, image.height-1-x1]
+                    '''for mask in masks:
+                        new_msk = [[] for _ in range(image.height)]
+                        for i in range( image.height ):
+                            for j in range( image.width ):
+                                new_msk[i].append(mask[image.width-1-j][i])
+                        mask = new_msk'''
+                    tmp1, tmp2 = maxY, minY
+                    minY = image.height - maxX
+                    maxY = image.height - minX
+                    minX = tmp2
+                    maxX = tmp1
+
+                    #if imageName == 'DSCF3120.JPG':
+                    #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+
+                    # Mirror flip back
+                    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                    for i in range(len(xList)):
+                        xList[i] = image.width - 1 - xList[i]
+                        bbox[i] = [image.width-1-bbox[i][2], bbox[i][1], image.width-1-bbox[i][0], bbox[i][3]]
+                    '''for mask in masks:
+                        new_msk = [[] for _ in range(image.height)]
+                        for i in range( image.height ):
+                            for j in range( image.width ):
+                                new_msk[i].append(mask[i][image.width-1-j])
+                        mask = new_msk'''
+                    tmp = maxX
+                    maxX = image.width - minX
+                    minX = image.width - tmp
+
+                    #if imageName == 'DSCF3120.JPG':
+                    #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+
+                    imageWidth = image.width
+                    imageHeight = image.height
+                
+                xArray = np.array(xList)
+                yArray = np.array(yList)
+                polyLine = np.polyfit(xArray,yArray,2)
+                p = np.poly1d( polyLine )
+                curve = []
+                for x in xList:
+                    curve.append(p(x))
+                mid = max(curve)
+                #crop if image is too big
+                if len(bbox) >= 9 or abs(mid-image.height/2)<=50:
+                    minX = max( 0 , minX-70 )
+                    minY = max( 0 , minY-70 )
+                    maxX = min( maxX+70 , image.width )
+                    maxY = min( maxY+70 , image.height )
+                    #if imageName == 'DSCF3120.JPG':
+                    #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+                    if (maxY - minY) * 1.429 < (maxX - minX):
+                        if (maxY + (((maxX-minX)-(maxY-minY)*1.429)/1.429)/2) < image.height:
+                            maxY += (((maxX-minX)-(maxY-minY)*1.429)/1.429) / 2
+                            if (minY - (((maxX-minX)-(maxY-minY)*1.429)/1.429)/2) > 0:
+                                minY -= (((maxX-minX)-(maxY-minY)*1.429)/1.429)/2
+                            else:
+                                maxY -= ((((maxX-minX)-(maxY-minY)*1.429)/1.429)/2 - minY)
+                                minY = 0
+                        else:
+                            minY -= (((maxX-minX)-(maxY-minY)*1.429)/1.429) / 2
+                            minY += ((maxY + (((maxX-minX)-(maxY-minY)*1.429)/1.429)/2) - image.height)
+                            maxY = image.height
+                    elif (maxY - minY) * 1.429 > (maxX - minX):
+                        if (maxX + ((maxY-minY)*1.429-(maxX-minX))/2) < image.width:
+                            maxX += ((maxY-minY)*1.429-(maxX-minX)) / 2
+                            if (minX - ((maxY-minY)*1.429-(maxX-minX))/2) > 0:
+                                minX -= ((maxY-minY)*1.429-(maxX-minX)) / 2
+                            else:
+                                maxX -= (((maxY-minY)*1.429-(maxX-minX))/2 - minX)
+                                minX = 0
+                        else:
+                            minX -= ((maxY-minY)*1.429-(maxX-minX)) / 2
+                            minX += ((maxX + ((maxY-minY)*1.429-(maxX-minX))/2) - image.width)
+                            maxX = image.width
+                    minX = int(max( 0 , minX ))
+                    minY = int(max( 0 , minY ))
+                    maxX = int(min( maxX , image.width ))
+                    maxY = int(min( maxY , image.height ))
+                    #if imageName == 'DSCF3120.JPG':
+                    #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
+
+                    image = image.crop((minX,minY,maxX,maxY))
+                    img = img.crop((minX,minY,maxX,maxY))
+                    black_img = black_img.crop((minX,minY,maxX,maxY))
+
+                    for i in range(len(xList)):
+                        xList[i] = xList[i] - minX
+                        yList[i] = yList[i] - minY
+                        bbox[i] = [bbox[i][0]-minX, bbox[i][1]-minY, bbox[i][2]-minX, bbox[i][3]-minY]
+
+                    '''for mask in masks:
+                        new_msk = [[] for _ in range(image.height)]
+                        #print( len(new_msk) )
+                        for i in range( minY, maxY ):
+                            for j in range( minX, maxX ):
+                                new_msk[i-minY].append(mask[i][j])
+                        mask = new_msk
+                '''
+                '''
                 # write to node folder
                 node_file_path = f"./result/{fileName}/node/node_{imageName[:-4]}.csv"
                 with open(node_file_path, "w", newline="") as nodeFile:
                     csvWriter = csv.writer(nodeFile)
                     csvWriter.writerow(xList)
                     csvWriter.writerow(yList)
+                '''
 
+                pltImage = np.array(image)
+                #pltImage = cv2.resize(pltImage, result.masks.data.shape[1:][::-1], interpolation=cv2.INTER_AREA)
+                sam_img = image
                 #image = cv2.imread(f"./{root}/{samdir}/{fileName}/{imageName}")
                 image = cv2.cvtColor(pltImage, cv2.COLOR_BGR2RGB)
                 if isCuda:
                     image = cv2.resize(image, (imageWidth, imageHeight), interpolation=cv2.INTER_AREA)
-                oriMask = masks
+                '''oriMask = masks
                 masks = SAM(image, bbox)
                 for mask in masks:
                     show_mask(mask.cpu().numpy(), plt.gca(), random_color=True)
-                    mask = mask.cpu().numpy()
-                    mask = np.where(mask > confident_thre, 255, 0).astype(np.uint8)
+                    mask = mask.cpu().numpy()'''
 
                 plt.axis('off')
 
@@ -1013,21 +1180,23 @@ if __name__ == "__main__":
 
                 npimg = np.array(image.copy(), dtype=np.uint8)
                 npblack_img = np.array(black_img, dtype=np.uint8)
-                for box,mask in zip(boxes,masks):
+                #for box,mask in zip(boxes,masks):
+                for box in bbox:
                     #print('box score',score.item())
                     teethCnt += 1
 
                     # print(image.height,image.width)
                     # print(mask.shape)
-                    mask = mask.detach().squeeze().cpu().numpy()
-                    mask = np.where(mask > confident_thre, 255, 0).astype(np.uint8)
+                    #mask = mask.detach().squeeze().cpu().numpy()
+                    #mask = np.where(mask > confident_thre, 255, 0).astype(np.uint8)
 
-                    points = cv2.findNonZero(mask)
+                    x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
+                    '''points = cv2.findNonZero(mask)
                     x,y,w,h = cv2.boundingRect(points)
                     x1 = int(x)
                     x2 = int(x+w)
                     y1 = int(y)
-                    y2 = int(y+h)
+                    y2 = int(y+h)'''
 
                     teethLocationSet.append( TeethLocation(x1,y1,x2,y2) )
 
@@ -1035,34 +1204,36 @@ if __name__ == "__main__":
                     yList.append( (y1+y2)/2 )
 
 
-                    teethNodetmp = TeethNode(mask,TeethLocation(x1,y1,x2,y2))
+                    '''teethNodetmp = TeethNode(mask,TeethLocation(x1,y1,x2,y2))
                     teethNodetmp.labelId = int(box.cls[0])
-                    imageTeethNodeSet.append(teethNodetmp)
+                    imageTeethNodeSet.append(teethNodetmp)'''
                     color = list(np.random.choice(range(256), size=3))
-                    npimg[np.where(mask>0)] = color
-                    npblack_img[np.where(mask>0)] = color
+                    '''npimg[np.where(mask>0)] = color
+                    npblack_img[np.where(mask>0)] = color'''
 
                     color = tuple(np.random.choice(range(256), size=3))
+                    
                     detLineScale = 0.005 #det line width scale
                     draw.line([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)], fill=color, width=int(imageWidth*detLineScale))
+                    ''''''
                     # draw.text((x1,y1), f"{score.item():.4f}", font=fnt) # draw confidence
 
                 xArray = np.array(xList)
                 yArray = np.array(yList)
-                plt.xlim( 0,imageWidth )
-                plt.ylim( imageHeight,0 )
+                plt.xlim( 0,imageWidth )#
+                plt.ylim( imageHeight,0 )#
                 polyLine = np.polyfit(xArray,yArray,2)
 
-                plt.imshow(pltImage)
-                plt.scatter(xArray,yArray) #draw dot
+                plt.imshow(pltImage)#
+                plt.scatter(xArray,yArray) #draw dot#
 
                 p = np.poly1d( polyLine )
                 xArray.sort()
                 x_base = np.linspace(0,imageWidth,imageWidth)
-                plt.plot(x_base, p(x_base),color = 'red') #draw regression
+                plt.plot(x_base, p(x_base),color = 'red') #draw regression#
 
-                pltSave(f"./result/{fileName}","regression","regression",imageName)
-                plt.clf()
+                pltSave(f"./result/{fileName}","regression","regression",imageName)#
+                plt.clf()#
 
                 imageGray = cv2.cvtColor(pltImage,cv2.COLOR_BGR2GRAY)
 
@@ -1074,13 +1245,13 @@ if __name__ == "__main__":
                 if checkFlag3D(pltImage,resizeScale,whiteProportion) == False:
                     imageFileInfo.is3D = False
 
-                pilSave(img,f"./result/{fileName}","det","det",imageName)
+                #pilSave(img,f"./result/{fileName}","det","det",imageName)
 
                 img = Image.fromarray(npimg)
                 black_img = Image.fromarray(npblack_img)
 
-                pilSave(img,f"./result/{fileName}","seg","seg",imageName)
-                pilSave(black_img,f"./result/{fileName}","seg","mask",imageName)
+                #pilSave(img,f"./result/{fileName}","seg","seg",imageName)
+                #pilSave(black_img,f"./result/{fileName}","seg","mask",imageName)
 
             writeFile = open(f"./result/{fileName}/imageClassification.csv",mode="w",newline="")
             csvWriter = csv.writer(writeFile)
@@ -1102,10 +1273,12 @@ if __name__ == "__main__":
                     info.useFlag = True
                     # frontal image flip back to original image
                     info.image = np.flip(info.image, axis=1)
+                    sam_img.transpose(Image.FLIP_LEFT_RIGHT)
                     # regression gradient ax^2 + bx + c = 0
                     a = info.polyLine[0]
                     if a > 0:
                         info.image = np.fliplr(np.flipud(info.image))
+                        sam_img.rotate(90, expand=True)
                     break
             compared_info = None
             for info in imageInfoSet:
@@ -1123,11 +1296,13 @@ if __name__ == "__main__":
                         for i in [compared_info, info]:
                             if i.view == 'Below' and i.gradient >= 0:
                                 i.image = np.fliplr(np.flipud(i.image))
+                                sam_img.rotate(180, expand=True)
                                 csvWriter.writerow([i.imageName, "Below Rotated"])
                             elif i.view == 'Below':
                                 csvWriter.writerow([i.imageName, "Below"])
                             elif i.view == 'Up' and i.gradient < 0:
                                 i.image = np.fliplr(np.flipud(i.image))
+                                sam_img.rotate(180, expand=True)
                                 csvWriter.writerow([i.imageName, "Up Rotated"])
                             else:
                                 csvWriter.writerow([i.imageName, "Up"])
@@ -1350,7 +1525,12 @@ if __name__ == "__main__":
                 else:
                     print('classification error view',file=specialLogFile)
 
+                saveName =  viewOfficial(imageInfo.view) + '_' + fileName + '.png'
+                pilSave(Image.fromarray(imageInfo.image.copy()),f"./sample/{fileName}","","",saveName)
+
+    print( time.ctime() )
     #########著色#########
+    '''
             with open('./utils/teeth_rgb.json') as jf:
                 with open('./utils/error_rgb.json') as errorJson:
                     colorData = json.load(jf)
@@ -1404,5 +1584,5 @@ if __name__ == "__main__":
                                 imgDraw = ImageDraw.Draw(img)
                         pilSave(Image.fromarray(np.hstack([imageInfo.image,np.array(img)])),f"./result/{fileName}","color","seg",saveName) 
                         pilSave(black_img,f"./result/{fileName}","color","mask",saveName)
-
+    '''
 
