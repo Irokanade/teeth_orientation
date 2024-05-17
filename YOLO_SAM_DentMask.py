@@ -71,7 +71,7 @@ def edge_detection(info):
     x_start = int(w * 0.3)   # Left 30%
     x_end = int(w * 0.67)    # Right 67%
     y_start = int(h * 0.20)  # Top 20%
-    y_end = int(h * 0.85)    # Bottom 85%
+    y_end = int(h * 0.92)    # Bottom 92%
 
     cropped_gray = gray[y_start:y_end, x_start:x_end]
 
@@ -1356,31 +1356,17 @@ if __name__ == "__main__":
                             max_teeth_location = None
                             image_width = info.image.shape[1]
                             for teethLocation in info.teethLocationSet:
-                                if teethLocation.x2 == image_width or teethLocation.x1 == 0:
-                                    continue
                                 height = abs(teethLocation.y2 - teethLocation.y1)
                                 width = abs(teethLocation.x2 - teethLocation.x1)
                                 area = height * width
-                                x_coordinates = (teethLocation.x1 + teethLocation.x2) / 2
-                                teeth_with_metrics.append((area, width, height, x_coordinates, teethLocation))
+                                if not ((teethLocation.x2 == image_width and area < 15000) or (teethLocation.x1 == 0 and area < 15000)):
+                                    x_coordinates = (teethLocation.x1 + teethLocation.x2) / 2
+                                    teeth_with_metrics.append((area, width, height, x_coordinates, teethLocation))
 
                             teeth_with_metrics.sort(key=lambda x: x[3])
-
                             teeth_edge = teeth_with_metrics[:2] + teeth_with_metrics[-2:]
                             height_greater_than_width = [teeth for teeth in teeth_edge if teeth[2] > teeth[1]]
-                            if len(height_greater_than_width) >= 2:
-                                sorted_by_area = sorted(height_greater_than_width, key=lambda x: x[0], reverse=True)
-                                area_ratio = sorted_by_area[1][0] / sorted_by_area[0][0]
-                                if 0.95 >= area_ratio >= 0.8:
-                                    max_teeth_location = max(sorted_by_area[:2], key=lambda x: x[2])[4]
-                                else:
-                                    max_teeth_location = sorted_by_area[0][4]
-                            elif height_greater_than_width:
-                                max_teeth_location = max(height_greater_than_width, key=lambda x: x[0])[4]
-                            else:
-                                sorted_by_width = sorted(teeth_edge, key=lambda x: x[1])
-                                top_two_smallest_width = sorted(sorted_by_width[:2], key=lambda x: x[0], reverse=True)
-                                max_teeth_location = top_two_smallest_width[0][4]
+                            max_teeth_location = max(height_greater_than_width, key=lambda x: x[1])[4]
                             max_y = max(max(teethLocation.y1, teethLocation.y2) for teethLocation in info.teethLocationSet)
                             min_y = min(min(teethLocation.y1, teethLocation.y2) for teethLocation in info.teethLocationSet)
                             average_y = (max_y + min_y) / 2
