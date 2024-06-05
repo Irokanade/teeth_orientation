@@ -1108,10 +1108,10 @@ if __name__ == "__main__":
                 mid = max(curve)
                 #crop if image is too big
                 if len(bbox) >= 9 or abs(mid-image.height/2)<=50:
-                    minX = max( 0 , minX-70 )
-                    minY = max( 0 , minY-70 )
-                    maxX = min( maxX+70 , image.width )
-                    maxY = min( maxY+70 , image.height )
+                    minX = max( 0 , minX-100 )
+                    minY = max( 0 , minY-100 )
+                    maxX = min( maxX+100 , image.width )
+                    maxY = min( maxY+100 , image.height )
                     #if imageName == 'DSCF3120.JPG':
                     #    print( minX, ", ", minY, ", ", maxX, ", ", maxY )
                     if (maxY - minY) * 1.429 < (maxX - minX):
