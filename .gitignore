@@ -13,6 +13,7 @@ result_YOLO_big_after/
 result_YOLO_big_before/
 rotatedAndMirrored/
 YOLO_DentMask_ori_copy.py
+depth_result/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

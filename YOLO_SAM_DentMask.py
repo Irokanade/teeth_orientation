@@ -80,6 +80,23 @@ def edge_detection(info):
 
     return edge_count
 
+def get_teeth_area(teeth):
+    return abs(teeth.y2 - teeth.y1) * abs(teeth.x2 - teeth.x1)
+
+def frontal_rotate(info):
+    middle_teeth = sorted(info.teethLocationSet, key=lambda t: (t.x1 + t.x2) / 2)[int(len(info.teethLocationSet)/2) - 4:int(len(info.teethLocationSet)/2) + 4]
+
+    top_4_teeth = middle_teeth[:4]
+    bottom_4_teeth = middle_teeth[4:]
+
+    top_4_avg_area = sum(get_teeth_area(teeth) for teeth in top_4_teeth) / 4
+    bottom_4_avg_area = sum(get_teeth_area(teeth) for teeth in bottom_4_teeth) / 4
+
+    if bottom_4_avg_area > top_4_avg_area:
+        info.image = np.rot90(info.image, 2)
+
+    return info
+
 class ImageFile:
     def __init__(self,FileName):
         self.fileName = FileName
@@ -1265,20 +1282,12 @@ if __name__ == "__main__":
                 csvWriter.writerow(["3D"])
             else:
                 csvWriter.writerow(["2D"])
-
             for info in imageInfoSet:
                 if info.teethRank == 1 and info.gradientRank >= 3 and info.useFlag == False:
-                    csvWriter.writerow([info.imageName,"Face"])
+                    csvWriter.writerow([info.imageName, "Face"])
                     info.view = 'Face'
                     info.useFlag = True
-                    # frontal image flip back to original image
-                    info.image = np.flip(info.image, axis=1)
-                    sam_img.transpose(Image.FLIP_LEFT_RIGHT)
-                    # regression gradient ax^2 + bx + c = 0
-                    a = info.polyLine[0]
-                    if a > 0:
-                        info.image = np.fliplr(np.flipud(info.image))
-                        sam_img.rotate(90, expand=True)
+                    info = frontal_rotate(info)
                     break
             compared_info = None
             for info in imageInfoSet:
